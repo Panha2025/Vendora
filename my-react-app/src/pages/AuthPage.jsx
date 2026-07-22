@@ -1,15 +1,24 @@
 import { useState } from 'react'
 import { loginUser, registerUser, socialLoginUser } from '../api/auth'
 
-function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
+function AuthPage({
+  initialMode = 'login',
+  language,
+  onAuthenticated,
+  onBack,
+  onLanguageChange,
+  t,
+}) {
   const [mode, setMode] = useState(initialMode)
   const [form, setForm] = useState({
     name: '',
+    phone: '',
     email: '',
     password: '',
     password_confirmation: '',
   })
   const [message, setMessage] = useState('')
+  const [messageType, setMessageType] = useState('info')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
 
@@ -26,15 +35,18 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
     event.preventDefault()
     setIsLoading(true)
     setMessage('')
+    setMessageType('info')
 
     try {
       const action = isRegistering ? registerUser : loginUser
       const session = await action(form)
 
-      setMessage(session.message || 'Welcome to SecondLoop.')
+      setMessage(session.message || 'Welcome to Vendora.')
+      setMessageType('success')
       onAuthenticated(session.user)
     } catch (error) {
       setMessage(error.message)
+      setMessageType('error')
     } finally {
       setIsLoading(false)
     }
@@ -47,6 +59,7 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
 
     setIsLoading(true)
     setMessage('')
+    setMessageType('info')
 
     try {
       const session = await socialLoginUser(provider)
@@ -54,6 +67,7 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
       onAuthenticated(session.user)
     } catch (error) {
       setMessage(error.message)
+      setMessageType('error')
     } finally {
       setIsLoading(false)
     }
@@ -64,12 +78,25 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
       <form className="auth-card plain-auth-card" onSubmit={handleSubmit}>
         {onBack && (
           <button className="auth-back-button" type="button" onClick={onBack}>
-            Back to marketplace
+            {t('backToMarketplace')}
           </button>
         )}
 
+        <label className="language-select auth-language-select">
+          <span>{t('language')}</span>
+          <select
+            aria-label={t('language')}
+            value={language}
+            onChange={(event) => onLanguageChange(event.target.value)}
+          >
+            <option value="en">English</option>
+            <option value="km">ខ្មែរ</option>
+            <option value="zh">中文</option>
+          </select>
+        </label>
+
         <div className="plain-auth-header">
-          <h1>{isRegistering ? 'Register' : 'Login'}</h1>
+          <h1>{isRegistering ? t('register') : t('login')}</h1>
           <p>
             {isRegistering
               ? 'Create your account to start using the marketplace.'
@@ -78,21 +105,35 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
         </div>
 
         {isRegistering && (
-          <label>
-            <span>Full name</span>
-            <input
-              name="name"
-              placeholder="Enter your name"
-              type="text"
-              value={form.name}
-              onChange={updateField}
-              required
-            />
-          </label>
+          <>
+            <label>
+              <span>{t('fullName')}</span>
+              <input
+                name="name"
+                placeholder="Enter your name"
+                type="text"
+                value={form.name}
+                onChange={updateField}
+                required
+              />
+            </label>
+
+            <label>
+              <span>{t('phoneNumber')}</span>
+              <input
+                name="phone"
+                placeholder="Enter your phone number"
+                type="tel"
+                value={form.phone}
+                onChange={updateField}
+                required
+              />
+            </label>
+          </>
         )}
 
         <label>
-          <span>Email Address</span>
+          <span>{t('emailAddress')}</span>
           <input
             name="email"
             placeholder="Enter your email"
@@ -104,7 +145,7 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
         </label>
 
         <label>
-          <span>Password</span>
+          <span>{t('password')}</span>
           <input
             name="password"
             placeholder="Enter your password"
@@ -141,14 +182,14 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
           </div>
         )}
 
-        {message && <p className="auth-message">{message}</p>}
+        {message && <p className={`auth-message ${messageType}`}>{message}</p>}
 
         <button className="auth-submit" type="submit">
           {isLoading
             ? 'Please wait...'
             : isRegistering
-              ? 'Register'
-              : 'Login'}
+              ? t('register')
+              : t('login')}
         </button>
 
         <p className="auth-switch-text">
@@ -160,7 +201,7 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
             type="button"
             onClick={() => setMode(isRegistering ? 'login' : 'register')}
           >
-            {isRegistering ? 'Login here' : 'Register here'}
+            {isRegistering ? t('login') : t('register')}
           </button>
         </p>
 
@@ -249,7 +290,7 @@ function AuthPage({ initialMode = 'login', onAuthenticated, onBack }) {
               </div>
               <h2 id="connect-title">Continue with {selectedProvider}</h2>
               <p>
-                SecondHand will create or open your marketplace account using
+                Vendora will create or open your marketplace account using
                 your {selectedProvider} sign-in.
               </p>
               <div className="connect-dialog-actions">

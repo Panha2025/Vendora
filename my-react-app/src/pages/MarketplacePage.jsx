@@ -1,17 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { addFavorite, getFavoriteProducts, removeFavorite } from '../api/favorites'
-import { getConversations, sendConversationMessage, startConversation } from '../api/messages'
+import {
+  getConversations,
+  markConversationRead,
+  sendConversationMessage,
+  startConversation,
+} from '../api/messages'
 import { formatRelativeTime, getProducts } from '../api/products'
+import vendoraLogo from '../assets/Vendora_img.png'
 import ProductCard from '../components/ProductCard'
 import { categories, conditions, products } from '../data/products'
 import MessagesView from '../sections/MessagesView'
 import ProductDetailView from '../sections/ProductDetailView'
 import PostItemSection from '../sections/PostItemSection'
 
-const sortOptions = ['Newest First', 'Price: Low to High', 'Price: High to Low']
+const sortOptions = ['Newest First', 'Most liked', 'Price: Low to High', 'Price: High to Low']
 const sidebarCategories = ['All', ...categories.filter((item) => item !== 'All')]
 const LISTING_CACHE_KEY = 'secondloop_posted_listings'
-const SERVER_LISTING_CACHE_KEY = 'secondloop_server_listings'
+const SERVER_LISTING_CACHE_KEY = 'secondloop_server_listings_v2'
+const PRODUCTS_PER_PAGE = 25
 
 const categoryIconPaths = {
   All: [
@@ -49,6 +56,21 @@ const categoryIconPaths = {
   Fashion: [
     <path key="1" d="M9 4h6l2 3 3 1.5-2 4-2-1V20H8v-8.5l-2 1-2-4L7 7z" />,
     <path key="2" d="M9 4a3 3 0 0 0 6 0" />,
+  ],
+  Handmade: [
+    <path key="1" d="M4 14.5h3.5l2.8 2.8a3 3 0 0 0 2.1.9H16a2 2 0 0 0 2-2v-.2" />,
+    <path key="2" d="M7.5 14.5V9.2a1.7 1.7 0 0 1 3.4 0V13" />,
+    <path key="3" d="M10.9 12.2V8a1.7 1.7 0 0 1 3.4 0v4.4" />,
+    <path key="4" d="M14.3 12V9.5a1.7 1.7 0 0 1 3.4 0v5.7" />,
+    <path key="5" d="M6 19.5h9.5c2.8 0 5-2.2 5-5V12" />,
+    <path key="6" d="M19 4l.6 1.4L21 6l-1.4.6L19 8l-.6-1.4L17 6l1.4-.6z" />,
+  ],
+  Stationery: [
+    <path key="1" d="M4 20h16" />,
+    <path key="2" d="M8 16 18.5 5.5a2.1 2.1 0 0 1 3 3L11 19l-4 1z" />,
+    <path key="3" d="m16.5 7.5 3 3" />,
+    <path key="4" d="M5 8h6" />,
+    <path key="5" d="M5 12h3" />,
   ],
   Toy: [
     <rect key="1" x="5" y="8" width="14" height="10" rx="2" />,
@@ -111,9 +133,13 @@ const appIconPaths = {
     <path key="3" d="M8 12h5" />,
   ],
   post: [
-    <path key="1" d="M12 5v14" />,
-    <path key="2" d="M5 12h14" />,
-    <rect key="3" x="4" y="4" width="16" height="16" rx="3" />,
+    <path key="1" d="M4 5h8.5L20 12.5 12.5 20 4 11.5z" />,
+    <circle key="2" cx="8" cy="9" r="1.4" />,
+    <path key="3" d="M13.5 10.5v5" />,
+    <path key="4" d="M11 13h5" />,
+  ],
+  theme: [
+    <path key="1" d="M12 3a7 7 0 1 0 7 7 5 5 0 0 1-7-7Z" />,
   ],
 }
 
@@ -165,10 +191,14 @@ function saveCachedListing(listing) {
 
 function saveServerListings(listings) {
   try {
-    localStorage.setItem(SERVER_LISTING_CACHE_KEY, JSON.stringify(listings.slice(0, 50)))
+    localStorage.setItem(SERVER_LISTING_CACHE_KEY, JSON.stringify(listings))
   } catch {
     localStorage.removeItem(SERVER_LISTING_CACHE_KEY)
   }
+}
+
+function getInstantListings() {
+  return mergeListings(getCachedListings(SERVER_LISTING_CACHE_KEY))
 }
 
 function mergeListings(...listingGroups) {
@@ -195,6 +225,50 @@ function getProductSortValue(product) {
   }
 
   return Number(product.id) || 0
+}
+
+function isSameUserId(firstId, secondId) {
+  return firstId != null && secondId != null && String(firstId) === String(secondId)
+}
+
+function translateCategory(t, item) {
+  const categoryKeys = {
+    All: 'allCategories',
+    Electronics: 'categoryElectronics',
+    'Phones & Tablets': 'categoryPhones',
+    Laptops: 'categoryLaptops',
+    'Home & Living': 'categoryHomeLiving',
+    Furniture: 'categoryFurniture',
+    Fashion: 'categoryFashion',
+    Handmade: 'categoryHandmade',
+    Stationery: 'categoryStationery',
+    Toy: 'categoryToy',
+    Sports: 'categorySports',
+    General: 'categoryGeneral',
+  }
+
+  return t(categoryKeys[item]) || item
+}
+
+function translateCondition(t, item) {
+  const conditionKeys = {
+    All: 'allConditions',
+    New: 'conditionNew',
+    Used: 'conditionUsed',
+  }
+
+  return t(conditionKeys[item]) || item
+}
+
+function translateSort(t, item) {
+  const sortKeys = {
+    'Newest First': 'sortNewest',
+    'Most liked': 'mostLiked',
+    'Price: Low to High': 'sortLowHigh',
+    'Price: High to Low': 'sortHighLow',
+  }
+
+  return t(sortKeys[item]) || item
 }
 
 function createConversation(product) {
@@ -228,14 +302,18 @@ function createConversation(product) {
   }
 }
 
-function MarketplacePage({ onLogout, onRequireAuth, user }) {
-  const [listings, setListings] = useState(() =>
-    mergeListings(
-      getCachedListings(SERVER_LISTING_CACHE_KEY),
-      getCachedListings(),
-      products,
-    ),
+function MarketplacePage({
+  language,
+  onLanguageChange,
+  onLogout,
+  onRequireAuth,
+  t,
+  user,
+}) {
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem('secondloop_theme') || 'light',
   )
+  const [listings, setListings] = useState(getInstantListings)
   const [conversations, setConversations] = useState(() =>
     products.length ? [createConversation(products[0])] : [],
   )
@@ -252,10 +330,42 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [favoriteIds, setFavoriteIds] = useState([])
   const [isPostFormOpen, setIsPostFormOpen] = useState(false)
+  const [isMobileOptionsOpen, setIsMobileOptionsOpen] = useState(false)
   const [isTopMenuOpen, setIsTopMenuOpen] = useState(false)
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
+  const [editingProduct, setEditingProduct] = useState(null)
   const [notice, setNotice] = useState('')
+  const accountMenuRef = useRef(null)
   const isGuest = !user
+
+  useEffect(() => {
+    localStorage.setItem('secondloop_theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    if (!isAccountMenuOpen) {
+      return undefined
+    }
+
+    function closeAccountMenu(event) {
+      if (!accountMenuRef.current?.contains(event.target)) {
+        setIsAccountMenuOpen(false)
+      }
+    }
+
+    function closeAccountMenuOnScroll() {
+      setIsAccountMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeAccountMenu)
+    window.addEventListener('scroll', closeAccountMenuOnScroll, true)
+
+    return () => {
+      document.removeEventListener('pointerdown', closeAccountMenu)
+      window.removeEventListener('scroll', closeAccountMenuOnScroll, true)
+    }
+  }, [isAccountMenuOpen])
 
   function requireAuthAction() {
     setIsTopMenuOpen(false)
@@ -263,12 +373,31 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
     onRequireAuth?.('register')
   }
 
-  async function refreshListingsFromServer() {
+  async function refreshListingsFromServer({ keepListings = [] } = {}) {
     const savedProducts = await getProducts()
     saveServerListings(savedProducts)
 
-    setListings(mergeListings(savedProducts, getCachedListings(), products))
+    setListings(mergeListings(keepListings, savedProducts))
     return savedProducts
+  }
+
+  async function refreshConversations({ keepActive = true } = {}) {
+    if (isGuest) {
+      return []
+    }
+
+    const savedConversations = await getConversations()
+
+    setConversations(savedConversations)
+    setActiveConversationId((currentId) => {
+      if (keepActive && savedConversations.some((conversation) => conversation.id === currentId)) {
+        return currentId
+      }
+
+      return savedConversations[0]?.id || null
+    })
+
+    return savedConversations
   }
 
   useEffect(() => {
@@ -295,7 +424,9 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
           saveServerListings(savedProducts)
         }
 
-        setListings(mergeListings(savedProducts, getCachedListings(), products))
+        if (productsResult.status === 'fulfilled') {
+          setListings(mergeListings(savedProducts))
+        }
 
         if (savedFavorites.length) {
           setFavoriteIds(savedFavorites.map((product) => product.id))
@@ -316,6 +447,36 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
     }
   }, [user])
 
+  useEffect(() => {
+    if (isGuest || activeView !== 'messages') {
+      return undefined
+    }
+
+    let isActive = true
+
+    const refresh = () => {
+      refreshConversations()
+        .then(() => {
+          if (isActive) {
+            setNotice('')
+          }
+        })
+        .catch(() => {
+          if (isActive) {
+            setNotice('Messages could not refresh. Please check the backend connection.')
+          }
+        })
+    }
+
+    refresh()
+    const intervalId = window.setInterval(refresh, 3000)
+
+    return () => {
+      isActive = false
+      window.clearInterval(intervalId)
+    }
+  }, [activeView, isGuest])
+
   const filteredProducts = useMemo(() => {
     const filtered = listings.filter((product) => {
       const normalizedQuery = query.trim().toLowerCase()
@@ -332,7 +493,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
         activeView !== 'favorites' || favoriteIds.includes(product.id)
       const matchesListingView =
         activeView !== 'listings'
-        || product.sellerId === user?.id
+        || isSameUserId(product.sellerId, user?.id)
         || product.seller === (user?.name || 'Seller')
 
       return (
@@ -355,6 +516,10 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
         return second.price - first.price
       }
 
+      if (sortBy === 'Most liked') {
+        return (second.favoriteCount || 0) - (first.favoriteCount || 0)
+      }
+
       return getProductSortValue(second) - getProductSortValue(first)
     })
   }, [
@@ -367,13 +532,17 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
     minPrice,
     query,
     sortBy,
+    user?.id,
     user?.name,
   ])
-  const pageSize = 10
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE))
   const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE,
+  )
+  const unreadMessageCount = conversations.reduce(
+    (total, conversation) => total + Number(conversation.unread || 0),
+    0,
   )
 
   async function handleCreateListing(listing) {
@@ -393,10 +562,49 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
       saveServerListings(mergeListings([listing], getCachedListings(SERVER_LISTING_CACHE_KEY)))
 
       try {
-        await refreshListingsFromServer()
+        await refreshListingsFromServer({ keepListings: [listing] })
       } catch {
         setNotice('Your item was posted. It is shown locally, but the server list could not refresh yet.')
       }
+    }
+  }
+
+  function isOwnListing(product) {
+    return Boolean(user && isSameUserId(product.sellerId, user.id))
+  }
+
+  function handleEditListing(product) {
+    if (!isOwnListing(product)) {
+      setNotice('Only the seller can edit this item.')
+      return
+    }
+
+    setIsTopMenuOpen(false)
+    setSelectedProduct(null)
+    setEditingProduct(product)
+    setIsPostFormOpen(true)
+    window.setTimeout(() => {
+      document.getElementById('post-item')?.scrollIntoView({ behavior: 'smooth' })
+    }, 0)
+  }
+
+  function handleUpdateListing(updatedProduct) {
+    setListings((current) =>
+      current.map((product) =>
+        product.id === updatedProduct.id ? updatedProduct : product,
+      ),
+    )
+    setSelectedProduct((current) =>
+      current?.id === updatedProduct.id ? updatedProduct : current,
+    )
+    setEditingProduct(null)
+    setIsPostFormOpen(false)
+    setActiveView('listings')
+    setNotice('Your listing was updated.')
+
+    if (updatedProduct.apiId) {
+      saveServerListings(mergeListings([updatedProduct], getCachedListings(SERVER_LISTING_CACHE_KEY)))
+      refreshListingsFromServer({ keepListings: [updatedProduct] }).catch(() => null)
     }
   }
 
@@ -426,6 +634,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
         setSelectedProduct(null)
         setActiveView('messages')
         setNotice('')
+        refreshConversations({ keepActive: true }).catch(() => null)
         return
       } catch {
         setNotice('Could not start this message. Please try again.')
@@ -467,6 +676,20 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
           : conversation,
       ),
     )
+
+    const conversation = conversations.find((item) => item.id === conversationId)
+
+    if (conversation?.apiId) {
+      markConversationRead(conversation.apiId)
+        .then((savedConversation) => {
+          setConversations((current) =>
+            current.map((item) =>
+              item.id === savedConversation.id ? savedConversation : item,
+            ),
+          )
+        })
+        .catch(() => null)
+    }
   }
 
   async function handleSendMessage(conversationId, text) {
@@ -493,6 +716,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
               : conversation,
           ),
         )
+        refreshConversations({ keepActive: true }).catch(() => null)
       } catch {
         setNotice('Could not send this message. Please try again.')
       }
@@ -530,11 +754,6 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
   }
 
   function resetFilters() {
-    if (isGuest) {
-      requireAuthAction()
-      return
-    }
-
     setSelectedProduct(null)
     setCategory('All')
     setConditionFilters(['All'])
@@ -553,18 +772,23 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
 
     setIsTopMenuOpen(false)
     setSelectedProduct(null)
+    setEditingProduct(null)
     setIsPostFormOpen(true)
     window.setTimeout(() => {
       document.getElementById('post-item')?.scrollIntoView({ behavior: 'smooth' })
     }, 0)
   }
 
-  function toggleCondition(value) {
-    if (isGuest) {
-      requireAuthAction()
-      return
-    }
+  function focusMarketplaceSearch() {
+    setActiveView('home')
+    setSelectedProduct(null)
+    window.setTimeout(() => {
+      document.getElementById('marketplace-search')?.focus()
+      document.getElementById('browse-products')?.scrollIntoView({ behavior: 'smooth' })
+    }, 0)
+  }
 
+  function toggleCondition(value) {
     setCurrentPage(1)
     setConditionFilters((current) => {
       if (value === 'All') {
@@ -594,6 +818,30 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
         ? current.filter((id) => id !== productId)
         : [...current, productId],
     )
+    setListings((current) =>
+      current.map((item) =>
+        item.id === productId
+          ? {
+              ...item,
+              favoriteCount: Math.max(
+                0,
+                Number(item.favoriteCount || 0) + (isFavorite ? -1 : 1),
+              ),
+            }
+          : item,
+      ),
+    )
+    setSelectedProduct((current) =>
+      current?.id === productId
+        ? {
+            ...current,
+            favoriteCount: Math.max(
+              0,
+              Number(current.favoriteCount || 0) + (isFavorite ? -1 : 1),
+            ),
+          }
+        : current,
+    )
 
     if (!product?.apiId) {
       return
@@ -603,33 +851,53 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
       ? removeFavorite(product.apiId)
       : addFavorite(product.apiId)
 
-    request.catch(() => {
+    request
+      .then((data) => {
+        if (data.favorite_count == null) {
+          return
+        }
+
+        const favoriteCount = Number(data.favorite_count || 0)
+
+        setListings((current) =>
+          current.map((item) =>
+            item.id === productId ? { ...item, favoriteCount } : item,
+          ),
+        )
+        setSelectedProduct((current) =>
+          current?.id === productId ? { ...current, favoriteCount } : current,
+        )
+      })
+      .catch(() => {
       setFavoriteIds((current) =>
         isFavorite
           ? [...current, productId]
           : current.filter((id) => id !== productId),
+      )
+      setListings((current) =>
+        current.map((item) =>
+          item.id === productId
+            ? {
+                ...item,
+                favoriteCount: Math.max(
+                  0,
+                  Number(item.favoriteCount || 0) + (isFavorite ? 1 : -1),
+                ),
+              }
+            : item,
+        ),
       )
       setNotice('Could not update your wishlist. Please try again.')
     })
   }
 
   function updateCategory(value) {
-    if (isGuest) {
-      requireAuthAction()
-      return
-    }
-
     setSelectedProduct(null)
     setCategory(value)
     setCurrentPage(1)
   }
 
   function openProductDetail(product) {
-    if (isGuest) {
-      requireAuthAction()
-      return
-    }
-
     setSelectedProduct(product)
     setNotice('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -641,7 +909,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
   }
 
   function showDashboardView(view) {
-    if (isGuest) {
+    if (isGuest && view !== 'home') {
       requireAuthAction()
       return
     }
@@ -654,34 +922,26 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
   }
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell ${theme === 'dark' ? 'dark-mode' : ''}`}>
       <header className="dashboard-topbar">
-        <a className="dashboard-brand" href="#top">
-          <span className="dashboard-logo">B</span>
+        <a className="dashboard-brand" href="#top" aria-label="Vendora home">
+          <span className="dashboard-logo" aria-hidden="true">
+            <img className="vendora-logo" src={vendoraLogo} alt="" />
+          </span>
           <span>
-            SecondHand
-            <small>Buy. Sell. Save.</small>
+            Vendora
+            <small>{t('buySellSave')}</small>
           </span>
         </a>
 
         <label className="dashboard-search">
-          <span>Search</span>
+          <span>{t('search')}</span>
           <input
-            placeholder="Search for items, categories or brands..."
-            readOnly={isGuest}
+            id="marketplace-search"
+            placeholder={t('searchPlaceholder')}
             type="search"
             value={query}
-            onFocus={() => {
-              if (isGuest) {
-                requireAuthAction()
-              }
-            }}
             onChange={(event) => {
-              if (isGuest) {
-                requireAuthAction()
-                return
-              }
-
               setQuery(event.target.value)
               setCurrentPage(1)
             }}
@@ -689,20 +949,57 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
         </label>
 
         <div className="dashboard-actions">
+          <label className="language-select compact-language-select">
+            <span>{t('language')}</span>
+            <select
+              aria-label={t('language')}
+              value={language}
+              onChange={(event) => onLanguageChange(event.target.value)}
+            >
+              <option value="en">English</option>
+              <option value="km">ខ្មែរ</option>
+              <option value="zh">中文</option>
+            </select>
+          </label>
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          >
+            <AppIcon name="theme" />
+            {theme === 'dark' ? t('light') : t('dark')}
+          </button>
           {isGuest ? (
             <button className="top-auth-button" type="button" onClick={requireAuthAction}>
-              Sign in/register
+              {t('signInRegister')}
             </button>
           ) : (
             <>
               <button type="button" onClick={scrollToPostItem}>
                 <AppIcon name="post" />
-                Post Item
+                {t('postItem')}
               </button>
-              <button className="account-button" type="button" onClick={onLogout}>
-                <AppIcon name="account" />
-                {user?.name || 'John Doe'}
-              </button>
+              <div
+                className="account-menu-wrap"
+                ref={accountMenuRef}
+              >
+                <button
+                  aria-expanded={isAccountMenuOpen}
+                  className="account-button"
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen((open) => !open)}
+                >
+                  <AppIcon name="account" />
+                  {user?.name || 'John Doe'}
+                </button>
+                {isAccountMenuOpen && (
+                  <div className="account-menu-panel">
+                    <button type="button" onClick={onLogout}>
+                      {t('logout')}?
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -721,25 +1018,47 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
               <div className="mobile-menu-panel">
                 {isGuest ? (
                   <button className="top-auth-button" type="button" onClick={requireAuthAction}>
-                    Sign in/register
+                    {t('signInRegister')}
                   </button>
                 ) : (
                   <>
                     <strong>{user?.name || 'John Doe'}</strong>
                     <button type="button" onClick={() => showDashboardView('messages')}>
                       <AppIcon name="message" />
-                      Messages
+                      {t('messages')}
+                      {unreadMessageCount > 0 && (
+                        <span className="notification-badge">{unreadMessageCount}</span>
+                      )}
                     </button>
                     <button type="button" onClick={() => showDashboardView('favorites')}>
                       <AppIcon name="favorite" />
-                      Wishlist
+                      {t('wishlist')}
                     </button>
                     <button type="button" onClick={scrollToPostItem}>
                       <AppIcon name="post" />
-                      Post Item
+                      {t('postItem')}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+                    >
+                      <AppIcon name="theme" />
+                      {theme === 'dark' ? t('lightMode') : t('darkMode')}
+                    </button>
+                    <label className="language-select">
+                      <span>{t('language')}</span>
+                      <select
+                        aria-label={t('language')}
+                        value={language}
+                        onChange={(event) => onLanguageChange(event.target.value)}
+                      >
+                        <option value="en">English</option>
+                        <option value="km">ខ្មែរ</option>
+                        <option value="zh">中文</option>
+                      </select>
+                    </label>
                     <button type="button" onClick={onLogout}>
-                      Logout
+                      {t('logout')}
                     </button>
                   </>
                 )}
@@ -751,13 +1070,20 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
 
       {selectedProduct ? (
         <ProductDetailView
+          canEdit={isOwnListing(selectedProduct)}
           isFavorite={favoriteIds.includes(selectedProduct.id)}
           product={selectedProduct}
-          relatedProducts={listings.filter((item) => item.id !== selectedProduct.id)}
+          relatedProducts={listings.filter(
+            (item) =>
+              item.id !== selectedProduct.id
+              && item.category === selectedProduct.category,
+          )}
           onBack={goBackToDashboard}
+          onEdit={handleEditListing}
           onMessage={handleMessage}
           onShowDetail={openProductDetail}
           onToggleFavorite={toggleFavorite}
+          t={t}
         />
       ) : (
       <div className="dashboard-layout">
@@ -766,10 +1092,13 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
             <button
               className={activeView === 'home' ? 'active' : ''}
               type="button"
-              onClick={() => showDashboardView('home')}
+                    onClick={() => {
+                      showDashboardView('home')
+                      setIsMobileOptionsOpen(false)
+                    }}
             >
               <AppIcon name="home" />
-              Home
+              {t('home')}
             </button>
             <button
               className={activeView === 'messages' ? 'active' : ''}
@@ -777,7 +1106,10 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
               onClick={() => showDashboardView('messages')}
             >
               <AppIcon name="message" />
-              My Messages
+              {t('myMessages')}
+              {unreadMessageCount > 0 && (
+                <span className="notification-badge">{unreadMessageCount}</span>
+              )}
             </button>
             <button
               className={activeView === 'favorites' ? 'active' : ''}
@@ -785,7 +1117,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
               onClick={() => showDashboardView('favorites')}
             >
               <AppIcon name="favorite" />
-              My Favorites
+              {t('myFavorites')}
             </button>
             <button
               className={activeView === 'listings' ? 'active' : ''}
@@ -793,14 +1125,14 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
               onClick={() => showDashboardView('listings')}
             >
               <AppIcon name="listing" />
-              My Listings
+              {t('myListings')}
             </button>
           </nav>
 
           {activeView !== 'messages' && (
             <>
               <div className="sidebar-block">
-                <h3>Categories</h3>
+                <h3>{t('categories')}</h3>
                 {sidebarCategories.map((item) => (
                   <button
                     className={`category-filter-button ${category === item ? 'active' : ''}`}
@@ -809,32 +1141,21 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                     onClick={() => updateCategory(item)}
                   >
                     <CategoryIcon category={item} />
-                    {item === 'All' ? 'All Categories' : item}
+                    {translateCategory(t, item)}
                   </button>
                 ))}
               </div>
 
               <div className="sidebar-block">
-                <h3>Filters</h3>
-                <p>Price Range</p>
+                <h3>{t('filters')}</h3>
+                <p>{t('priceRange')}</p>
                 <div className="price-filter">
                   <input
                     min="0"
                     placeholder="Min"
-                    readOnly={isGuest}
                     type="number"
                     value={minPrice}
-                    onFocus={() => {
-                      if (isGuest) {
-                        requireAuthAction()
-                      }
-                    }}
                     onChange={(event) => {
-                      if (isGuest) {
-                        requireAuthAction()
-                        return
-                      }
-
                       setMinPrice(event.target.value)
                       setCurrentPage(1)
                     }}
@@ -843,27 +1164,16 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                   <input
                     min="0"
                     placeholder="Max"
-                    readOnly={isGuest}
                     type="number"
                     value={maxPrice}
-                    onFocus={() => {
-                      if (isGuest) {
-                        requireAuthAction()
-                      }
-                    }}
                     onChange={(event) => {
-                      if (isGuest) {
-                        requireAuthAction()
-                        return
-                      }
-
                       setMaxPrice(event.target.value)
                       setCurrentPage(1)
                     }}
                   />
                 </div>
 
-                <p>Condition</p>
+                <p>{t('condition')}</p>
                 <div className="condition-list">
                   {conditions.map((item) => (
                     <label key={item}>
@@ -872,7 +1182,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                         type="checkbox"
                         onChange={() => toggleCondition(item)}
                       />
-                      <span>{item === 'All' ? 'All Conditions' : item}</span>
+                      <span>{translateCondition(t, item)}</span>
                     </label>
                   ))}
                 </div>
@@ -881,18 +1191,13 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                   className="filter-button"
                   type="button"
                   onClick={() => {
-                    if (isGuest) {
-                      requireAuthAction()
-                      return
-                    }
-
                     setNotice('Filters applied.')
                   }}
                 >
-                  Apply Filters
+                  {t('applyFilters')}
                 </button>
                 <button className="reset-button" type="button" onClick={resetFilters}>
-                  Reset Filters
+                  {t('resetFilters')}
                 </button>
               </div>
             </>
@@ -903,56 +1208,192 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
           {activeView !== 'messages' && (
             <section className="dashboard-promo" aria-label="Marketplace promotions">
               <div className="promo-hero">
-                <div>
-                  <span className="promo-kicker">SecondHand deals</span>
-                  <h1>Save more on pre-owned finds</h1>
-                  <p>Claim marketplace perks, browse trusted sellers, and post your first item in minutes.</p>
+                <div className="promo-copy">
+                  <h1>{t('yourTechStartsHere')}</h1>
                   <div className="promo-trust-row">
-                    <span>Buyer protection tips</span>
-                    <span>Local seller chat</span>
-                    <span>Fresh listings daily</span>
+                    <span>{t('verifiedSellers')}</span>
+                    <span>{t('fastLocalChat')}</span>
                   </div>
                 </div>
                 <div className="promo-media">
-                  <span className="promo-tag promo-tag-top">Up to 60% less</span>
                   <img
-                    src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=85"
-                    alt="Second-hand sofa promotion"
+                    src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=88"
+                    alt="Electronics marketplace"
+                    decoding="async"
+                    fetchPriority="high"
+                    loading="eager"
                   />
-                  <span className="promo-tag promo-tag-bottom">Verified chat</span>
+                </div>
+                <div className="promo-search-card">
+                  <div className="promo-search-row">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSortBy('Most liked')
+                        setCurrentPage(1)
+                        document.getElementById('browse-products')?.scrollIntoView({ behavior: 'smooth' })
+                      }}
+                    >
+                      {t('mostLiked')}
+                    </button>
+                    <button type="button" onClick={() => setSortBy('Newest First')}>
+                      {t('newArrivals')}
+                    </button>
+                    <button type="button" onClick={resetFilters}>
+                      {t('allPrices')}
+                    </button>
+                    <button type="button" onClick={focusMarketplaceSearch}>
+                      {t('search')}
+                    </button>
+                  </div>
                 </div>
               </div>
+            </section>
+          )}
 
-              <div className="promo-cards" aria-label="New user marketplace offers">
-                <article className="promo-card promo-card-primary">
-                  <span>New user exclusive</span>
-                  <h2>Start buying and selling today</h2>
-                  <button type="button" onClick={isGuest ? requireAuthAction : scrollToPostItem}>
-                    {isGuest ? 'Sign in & claim all' : 'Post your first item'}
-                  </button>
-                </article>
-                <article className="promo-card">
-                  <strong>10% off</strong>
-                  <span>Electronics picks</span>
-                  <button type="button" onClick={() => updateCategory('Electronics')}>
-                    Claim
-                  </button>
-                </article>
-                <article className="promo-card">
-                  <strong>5% off</strong>
-                  <span>Home & Living finds</span>
-                  <button type="button" onClick={() => updateCategory('Home & Living')}>
-                    Claim
-                  </button>
-                </article>
-                <article className="promo-card">
-                  <strong>Free boost</strong>
-                  <span>First seller listing</span>
-                  <button type="button" onClick={scrollToPostItem}>
-                    Claim
-                  </button>
-                </article>
-              </div>
+          {activeView !== 'messages' && (
+            <section className="mobile-browse-options" aria-label="Mobile browse options">
+              <button
+                aria-expanded={isMobileOptionsOpen}
+                className="mobile-options-toggle"
+                type="button"
+                onClick={() => setIsMobileOptionsOpen((open) => !open)}
+              >
+                {t('options')}
+                <span>{isMobileOptionsOpen ? '-' : '+'}</span>
+              </button>
+
+              {isMobileOptionsOpen && (
+                <div className="mobile-options-panel">
+                  <nav className="side-menu" aria-label="Mobile dashboard menu">
+                    <button
+                      className={activeView === 'home' ? 'active' : ''}
+                      type="button"
+                      onClick={() => showDashboardView('home')}
+                    >
+                      <AppIcon name="home" />
+                      {t('home')}
+                    </button>
+                    <button
+                      className={activeView === 'messages' ? 'active' : ''}
+                      type="button"
+                      onClick={() => {
+                        showDashboardView('messages')
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      <AppIcon name="message" />
+                      {t('myMessages')}
+                      {unreadMessageCount > 0 && (
+                        <span className="notification-badge">{unreadMessageCount}</span>
+                      )}
+                    </button>
+                    <button
+                      className={activeView === 'favorites' ? 'active' : ''}
+                      type="button"
+                      onClick={() => {
+                        showDashboardView('favorites')
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      <AppIcon name="favorite" />
+                      {t('myFavorites')}
+                    </button>
+                    <button
+                      className={activeView === 'listings' ? 'active' : ''}
+                      type="button"
+                      onClick={() => {
+                        showDashboardView('listings')
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      <AppIcon name="listing" />
+                      {t('myListings')}
+                    </button>
+                  </nav>
+
+                  <div className="sidebar-block">
+                    <h3>{t('categories')}</h3>
+                    {sidebarCategories.map((item) => (
+                      <button
+                        className={`category-filter-button ${category === item ? 'active' : ''}`}
+                        key={item}
+                        type="button"
+                        onClick={() => {
+                          updateCategory(item)
+                          setIsMobileOptionsOpen(false)
+                        }}
+                      >
+                        <CategoryIcon category={item} />
+                        {translateCategory(t, item)}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="sidebar-block">
+                    <h3>{t('filters')}</h3>
+                    <p>{t('priceRange')}</p>
+                    <div className="price-filter">
+                      <input
+                        min="0"
+                        placeholder="Min"
+                        type="number"
+                        value={minPrice}
+                        onChange={(event) => {
+                          setMinPrice(event.target.value)
+                          setCurrentPage(1)
+                        }}
+                      />
+                      <span>to</span>
+                      <input
+                        min="0"
+                        placeholder="Max"
+                        type="number"
+                        value={maxPrice}
+                        onChange={(event) => {
+                          setMaxPrice(event.target.value)
+                          setCurrentPage(1)
+                        }}
+                      />
+                    </div>
+
+                    <p>{t('condition')}</p>
+                    <div className="condition-list">
+                      {conditions.map((item) => (
+                        <label key={item}>
+                          <input
+                            checked={conditionFilters.includes(item)}
+                            type="checkbox"
+                            onChange={() => toggleCondition(item)}
+                          />
+                          <span>{translateCondition(t, item)}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <button
+                      className="filter-button"
+                      type="button"
+                      onClick={() => {
+                        setNotice('Filters applied.')
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      {t('applyFilters')}
+                    </button>
+                    <button
+                      className="reset-button"
+                      type="button"
+                      onClick={() => {
+                        resetFilters()
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      {t('resetFilters')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -960,7 +1401,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
             <div className="dashboard-notice">
               <span>{notice}</span>
               <button type="button" onClick={() => setNotice('')}>
-                Close
+                {t('close')}
               </button>
             </div>
           )}
@@ -968,27 +1409,16 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
           {activeView !== 'messages' && (
             <section className="dashboard-toolbar" aria-label="Browse controls">
               <label className="sort-control">
-                <span>Sort by:</span>
+                <span>{t('sortBy')}</span>
                 <select
                   value={sortBy}
-                  onMouseDown={(event) => {
-                    if (isGuest) {
-                      event.preventDefault()
-                      requireAuthAction()
-                    }
-                  }}
                   onChange={(event) => {
-                    if (isGuest) {
-                      requireAuthAction()
-                      return
-                    }
-
                     setSortBy(event.target.value)
                     setCurrentPage(1)
                   }}
                 >
                   {sortOptions.map((option) => (
-                    <option key={option}>{option}</option>
+                    <option key={option} value={option}>{translateSort(t, option)}</option>
                   ))}
                 </select>
               </label>
@@ -1006,12 +1436,13 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
           )}
 
           {activeView !== 'messages' && (
-            <section className="dashboard-grid" aria-label="Product listings">
+            <section className="dashboard-grid" id="browse-products" aria-label="Product listings">
               {paginatedProducts.map((product) => (
                 <ProductCard
                   isFavorite={favoriteIds.includes(product.id)}
                 key={product.id}
                 product={product}
+                t={t}
                 onMessage={handleMessage}
                 onShowDetail={openProductDetail}
                 onToggleFavorite={toggleFavorite}
@@ -1022,7 +1453,7 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
 
           {activeView !== 'messages' && !filteredProducts.length && (
             <section className="plain-panel">
-              <h2>No items found</h2>
+              <h2>{t('noItemsFound')}</h2>
               <p>Try changing your search, category, price, or condition filters.</p>
             </section>
           )}
@@ -1033,11 +1464,6 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                 disabled={currentPage === 1}
                 type="button"
                 onClick={() => {
-                  if (isGuest) {
-                    requireAuthAction()
-                    return
-                  }
-
                   setCurrentPage((page) => Math.max(1, page - 1))
                 }}
               >
@@ -1049,11 +1475,6 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                   key={index + 1}
                   type="button"
                   onClick={() => {
-                    if (isGuest) {
-                      requireAuthAction()
-                      return
-                    }
-
                     setCurrentPage(index + 1)
                   }}
                 >
@@ -1064,11 +1485,6 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
                 disabled={currentPage === totalPages}
                 type="button"
                 onClick={() => {
-                  if (isGuest) {
-                    requireAuthAction()
-                    return
-                  }
-
                   setCurrentPage((page) => Math.min(totalPages, page + 1))
                 }}
               >
@@ -1079,8 +1495,13 @@ function MarketplacePage({ onLogout, onRequireAuth, user }) {
 
           {isPostFormOpen && (
             <PostItemSection
-              onCancel={() => setIsPostFormOpen(false)}
+              editingProduct={editingProduct}
+              onCancel={() => {
+                setEditingProduct(null)
+                setIsPostFormOpen(false)
+              }}
               onCreateListing={handleCreateListing}
+              onUpdateListing={handleUpdateListing}
               user={user}
             />
           )}

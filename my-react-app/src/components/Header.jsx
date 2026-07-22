@@ -1,9 +1,9 @@
 function Header({ onLogout, onPostItem, user }) {
   return (
     <header className="site-header">
-      <a className="brand" href="#top" aria-label="SecondLoop home">
-        <span className="brand-mark">SL</span>
-        <span>SecondLoop</span>
+      <a className="brand" href="#top" aria-label="Vendora home">
+        <span className="brand-mark">S</span>
+        <span>Vendora</span>
       </a>
 
       <nav className="main-nav" aria-label="Main navigation">

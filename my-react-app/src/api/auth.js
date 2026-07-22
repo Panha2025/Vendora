@@ -7,6 +7,25 @@ function saveSession({ token, user }) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user))
 }
 
+function consumeOAuthRedirectSession() {
+  const params = new URLSearchParams(window.location.search)
+  const token = params.get('oauth_token')
+  const encodedUser = params.get('oauth_user')
+
+  if (!token || !encodedUser) {
+    return null
+  }
+
+  try {
+    const user = JSON.parse(atob(decodeURIComponent(encodedUser)))
+    saveSession({ token, user })
+    window.history.replaceState({}, document.title, window.location.pathname)
+    return user
+  } catch {
+    return null
+  }
+}
+
 async function sendAuthRequest(endpoint, payload) {
   let response
 
@@ -54,6 +73,12 @@ function getFriendlyAuthError(message) {
 }
 
 export function getStoredUser() {
+  const oauthUser = consumeOAuthRedirectSession()
+
+  if (oauthUser) {
+    return oauthUser
+  }
+
   const token = localStorage.getItem(TOKEN_KEY)
 
   if (token?.startsWith('social-')) {
@@ -80,52 +105,19 @@ export async function registerUser(payload) {
 
 export async function socialLoginUser(provider) {
   const normalizedProvider = provider.toLowerCase()
-  const socialAccount = {
-    name: `${provider} User`,
-    email: `${normalizedProvider}.user@secondloop.local`,
-  }
-  const password = `SecondHand-${normalizedProvider}-Account-2026`
-
-  try {
-    const session = await sendAuthRequest('/register', {
-      ...socialAccount,
-      password,
-      password_confirmation: password,
-    })
-
-    saveSession({
-      ...session,
-      user: {
-        ...session.user,
-        provider,
-      },
-    })
-
-    return session
-  } catch (error) {
-    const accountAlreadyExists = String(error.message)
-      .toLowerCase()
-      .includes('already')
-
-    if (!accountAlreadyExists) {
-      throw error
-    }
-  }
-
-  const session = await sendAuthRequest('/login', {
-    email: socialAccount.email,
-    password,
-  })
-
-  saveSession({
-    ...session,
-    user: {
-      ...session.user,
-      provider,
+  const response = await fetch(`${API_URL}/auth/${normalizedProvider}/redirect`, {
+    headers: {
+      Accept: 'application/json',
     },
   })
+  const data = await response.json().catch(() => ({}))
 
-  return session
+  if (!response.ok) {
+    throw new Error(data.message || `${provider} login is not configured yet.`)
+  }
+
+  window.location.assign(data.url)
+  return new Promise(() => {})
 }
 
 export async function logoutUser() {

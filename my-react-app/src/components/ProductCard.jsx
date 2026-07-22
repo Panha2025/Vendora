@@ -4,6 +4,15 @@ function ProductCard({
   onShowDetail,
   onToggleFavorite,
   product,
+  t = (key) => ({
+    addToWishlist: 'Add to Wishlist',
+    message: 'Message',
+    moreDetail: 'More Detail',
+    mostLiked: 'Most liked',
+    removeFromWishlist: 'Remove from Wishlist',
+    save: 'Save',
+    saved: 'Saved',
+  }[key] || key),
 }) {
   return (
     <article className="dashboard-product-card">
@@ -12,16 +21,32 @@ function ProductCard({
         type="button"
         onClick={() => onShowDetail(product)}
       >
-        <img src={product.image} alt={product.title} />
+        <img
+          src={product.image}
+          alt={product.title}
+          decoding="async"
+          loading="eager"
+        />
       </button>
       <div className="favorite-button-wrap">
         <button
-          aria-label={isFavorite ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={isFavorite ? t('removeFromWishlist') : t('addToWishlist')}
           className={`favorite-button ${isFavorite ? 'active' : ''}`}
           type="button"
           onClick={() => onToggleFavorite(product.id)}
         >
-          {isFavorite ? 'Saved' : 'Save'}
+          <svg
+            aria-hidden="true"
+            className="favorite-icon"
+            fill={isFavorite ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.2"
+            viewBox="0 0 24 24"
+          >
+            <path d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z" />
+          </svg>
         </button>
       </div>
 
@@ -42,10 +67,10 @@ function ProductCard({
 
         <div className="dashboard-card-actions">
           <button type="button" onClick={() => onShowDetail(product)}>
-            More Detail
+            {t('moreDetail')}
           </button>
           <button type="button" onClick={() => onMessage(product)}>
-            Message
+            {t('message')}
           </button>
         </div>
       </div>

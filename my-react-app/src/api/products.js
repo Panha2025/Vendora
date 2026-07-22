@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
+const AUTH_KEY = 'secondloop_user'
 const TOKEN_KEY = 'secondloop_token'
 
 function getAuthToken() {
@@ -61,6 +62,7 @@ export function mapApiProduct(product) {
     sellerId: product.user_id,
     sellerSince: 'Marketplace seller',
     sellerRating: 'New seller',
+    favoriteCount: Number(product.favorited_by_count || product.favorite_count || 0),
     duration: formatRelativeTime(postedAt),
     createdAt: postedAt,
     status: product.status,
@@ -77,23 +79,31 @@ export function mapApiProduct(product) {
   }
 }
 
+export function getProductImageCropUrl(productId, imageIndex) {
+  return `${API_URL}/products/${productId}/images/${imageIndex}`
+}
+
 export async function getProducts() {
   const token = getAuthToken()
-
-  if (!token || token.startsWith('demo-')) {
-    return []
+  const headers = {
+    Accept: 'application/json',
   }
 
-  const response = await fetch(`${API_URL}/products`, {
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  if (token && !token.startsWith('demo-')) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_URL}/products`, { headers })
 
   const data = await response.json()
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(AUTH_KEY)
+      throw new Error('Your session expired. Please log in again.')
+    }
+
     throw new Error(data.message || 'Could not load products')
   }
 
@@ -130,10 +140,74 @@ export async function createProduct(product, imageFiles = []) {
     body: formData,
   })
 
-  const data = await response.json()
+  const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(AUTH_KEY)
+      throw new Error('Your session expired. Please log in again.')
+    }
+
     throw new Error(data.message || 'Could not post item')
+  }
+
+  return {
+    product: mapApiProduct(data.product),
+  }
+}
+
+export async function updateProduct(productId, product, imageItems = []) {
+  const token = localStorage.getItem(TOKEN_KEY)
+
+  if (!token || token.startsWith('demo-')) {
+    throw new Error('Please log in again before editing this item.')
+  }
+
+  const formData = new FormData()
+
+  Object.entries(product).forEach(([key, value]) => {
+    if (key !== 'images' && value !== undefined && value !== null) {
+      formData.append(key, value)
+    }
+  })
+
+  imageItems.slice(0, 5).forEach((image) => {
+    if (image.file) {
+      formData.append('images[]', image.file)
+      return
+    }
+
+    if (image.existing && image.originalUrl) {
+      formData.append('existing_images[]', image.originalUrl)
+    }
+  })
+
+  formData.append('_method', 'PUT')
+
+  const response = await fetch(`${API_URL}/products/${productId}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(AUTH_KEY)
+      throw new Error('Your session expired. Please log in again.')
+    }
+
+    if (response.status === 403) {
+      throw new Error('Only the seller can edit this item.')
+    }
+
+    throw new Error(data.message || 'Could not update item')
   }
 
   return {

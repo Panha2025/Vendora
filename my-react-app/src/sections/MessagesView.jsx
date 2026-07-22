@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 function MessagesView({
   activeConversationId,
@@ -7,6 +7,7 @@ function MessagesView({
   onSendMessage,
   onShowListing,
 }) {
+  const threadRef = useRef(null)
   const [conversationSearch, setConversationSearch] = useState('')
   const [draft, setDraft] = useState('')
 
@@ -28,6 +29,14 @@ function MessagesView({
     conversations.find((conversation) => conversation.id === activeConversationId)
     || conversations[0]
 
+  useEffect(() => {
+    const thread = threadRef.current
+
+    if (thread) {
+      thread.scrollTop = thread.scrollHeight
+    }
+  }, [activeConversation?.id, activeConversation?.messages.length])
+
   function handleSubmit(event) {
     event.preventDefault()
 
@@ -44,9 +53,7 @@ function MessagesView({
       <aside className="messages-list-panel">
         <div className="messages-panel-heading">
           <h2>Messages</h2>
-          <button type="button" aria-label="New message">
-            +
-          </button>
+          <span className="live-chat-pill">Live</span>
         </div>
 
         <label className="conversation-search">
@@ -69,7 +76,7 @@ function MessagesView({
               type="button"
               onClick={() => onOpenConversation(conversation.id)}
             >
-              <img src={conversation.product.image} alt="" />
+              <img src={conversation.product.image} alt="" decoding="async" loading="lazy" />
               <span>
                 <strong>{conversation.seller}</strong>
                 <small>{conversation.lastMessage}</small>
@@ -91,7 +98,7 @@ function MessagesView({
         <article className="chat-panel">
           <header className="chat-header">
             <div className="chat-listing-summary">
-              <img src={activeConversation.product.image} alt="" />
+              <img src={activeConversation.product.image} alt="" decoding="async" loading="eager" />
               <div>
                 <strong>{activeConversation.seller}</strong>
                 <span>{activeConversation.product.title}</span>
@@ -108,7 +115,7 @@ function MessagesView({
 
           <div className="chat-date">May 24, 2024</div>
 
-          <div className="message-thread">
+          <div className="message-thread" ref={threadRef}>
             {activeConversation.messages.map((message) => (
               <div
                 className={`message-bubble-row ${
@@ -120,6 +127,8 @@ function MessagesView({
                   <img
                     src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80"
                     alt=""
+                    decoding="async"
+                    loading="lazy"
                   />
                 )}
                 <p>

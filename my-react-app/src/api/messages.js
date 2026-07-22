@@ -54,7 +54,7 @@ export function mapApiConversation(conversation) {
     product,
     seller: otherUser?.name || product.seller,
     time: formatMessageTime(conversation.updated_at),
-    unread: 0,
+    unread: Number(conversation.unread_count || 0),
   }
 }
 
@@ -108,6 +108,21 @@ export async function sendConversationMessage(conversationId, message) {
 
   if (!response.ok) {
     throw new Error(data.message || 'Could not send message')
+  }
+
+  return mapApiConversation(data.conversation)
+}
+
+export async function markConversationRead(conversationId) {
+  const response = await fetch(`${API_URL}/conversations/${conversationId}/read`, {
+    method: 'POST',
+    headers: getHeaders(),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Could not mark conversation as read')
   }
 
   return mapApiConversation(data.conversation)

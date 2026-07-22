@@ -31,7 +31,7 @@ $chromeCandidates = @(
 )
 $chromePath = $chromeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-Stop-ListeningProcess -Port 8000
+Stop-ListeningProcess -Port 8001
 Stop-ListeningProcess -Port 5180
 
 Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoExit', '-ExecutionPolicy', 'Bypass', '-File', 'start-api.ps1') -WorkingDirectory $backend
