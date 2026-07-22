@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { addFavorite, getFavoriteProducts, removeFavorite } from '../api/favorites'
 import {
   getConversations,
@@ -373,15 +373,15 @@ function MarketplacePage({
     onRequireAuth?.('register')
   }
 
-  async function refreshListingsFromServer({ keepListings = [] } = {}) {
+  const refreshListingsFromServer = useCallback(async ({ keepListings = [] } = {}) => {
     const savedProducts = await getProducts()
     saveServerListings(savedProducts)
 
     setListings(mergeListings(keepListings, savedProducts))
     return savedProducts
-  }
+  }, [])
 
-  async function refreshConversations({ keepActive = true } = {}) {
+  const refreshConversations = useCallback(async ({ keepActive = true } = {}) => {
     if (isGuest) {
       return []
     }
@@ -398,7 +398,7 @@ function MarketplacePage({
     })
 
     return savedConversations
-  }
+  }, [isGuest])
 
   useEffect(() => {
     let isActive = true
@@ -475,7 +475,7 @@ function MarketplacePage({
       isActive = false
       window.clearInterval(intervalId)
     }
-  }, [activeView, isGuest])
+  }, [activeView, isGuest, refreshConversations])
 
   const filteredProducts = useMemo(() => {
     const filtered = listings.filter((product) => {

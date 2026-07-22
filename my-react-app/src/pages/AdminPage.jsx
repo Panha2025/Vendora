@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   deleteAdminProduct,
   deleteAdminUser,
@@ -43,8 +43,11 @@ function AdminPage({ language, onLanguageChange, onLogout, t, user }) {
   const [notice, setNotice] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
-  async function refreshAdminOverview() {
-    setIsLoading(true)
+  const refreshAdminOverview = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
+      setIsLoading(true)
+    }
+
     try {
       const data = await getAdminOverview()
       setOverview(data)
@@ -54,10 +57,34 @@ function AdminPage({ language, onLanguageChange, onLogout, t, user }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    refreshAdminOverview()
+    let isActive = true
+
+    getAdminOverview()
+      .then((data) => {
+        if (!isActive) {
+          return
+        }
+
+        setOverview(data)
+        setNotice('')
+      })
+      .catch((error) => {
+        if (isActive) {
+          setNotice(error.message)
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false)
+        }
+      })
+
+    return () => {
+      isActive = false
+    }
   }, [])
 
   const filteredProducts = useMemo(() => {
