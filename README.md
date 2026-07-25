@@ -1,3 +1,4 @@
+
 # Vendora
 
 ## Introduction
@@ -41,48 +42,38 @@ The application also includes user authentication, wishlist functionality, buyer
 
 ## Technologies Used
 
-## Frontend
+### Frontend
 
-### React
-
+**React**  
 Used to build the main user interface, including the marketplace dashboard, authentication page, product cards, product detail page, messaging view, post item form, and admin page.
 
-### Vite
-
+**Vite**  
 Used as the frontend development and build tool. It provides fast development loading and creates the production build for deployment.
 
-### JavaScript JSX
-
+**JavaScript JSX**  
 Used to create interactive frontend components and handle application logic such as filtering, sorting, posting items, favorites, messages, and user interactions.
 
-### CSS
-
+**CSS**  
 Used for custom styling, responsive layout, light/dark mode, dashboard design, product cards, forms, buttons, and mobile-friendly pages.
 
-### Local Storage
-
+**Local Storage**  
 Used to store demo data such as theme preference, language preference, user session, and local product listings when the backend is not available.
 
-## Backend
+### Backend
 
-### Laravel
-
+**Laravel**  
 Used to build the backend API for authentication, product listings, image uploads, favorites, conversations, messages, and admin management.
 
-### PHP
-
+**PHP**  
 Used as the backend programming language for controllers, models, routes, validation, and database interaction.
 
-### Laravel Sanctum
-
+**Laravel Sanctum**  
 Used for API token authentication so users can securely log in, post products, save favorites, and send messages.
 
-### Laravel Socialite
-
+**Laravel Socialite**  
 Used to support social login providers such as Google, Facebook, and Apple.
 
-### MySQL
-
+**MySQL**  
 Used to store application data such as users, products, favorites, conversations, messages, and access tokens.
 
 ## Database
@@ -127,12 +118,15 @@ backend-app/routes/api.php - Backend API routes
 backend-app/app/Http/Controllers/Api/ - Backend API controllers
 backend-app/app/Models/ - Laravel database models
 backend-app/database/migrations/ - Database table structure files
+```
 
 ## Deployment Note
 
 The GitHub Pages version can display the frontend demo, but GitHub Pages cannot run the Laravel backend or store shared user uploads by itself.
+
 For a real online marketplace where all users can register, upload products, send messages, and see shared data, the Laravel backend, MySQL database, and image storage must also be deployed to a server.
 
 ## Conclusion
 
 Vendora demonstrates how a full-stack web application can be used to support second-hand buying and selling. By combining a React frontend, Laravel backend, SQL database, authentication, image uploads, messaging, favorites, and admin tools, the project provides a practical marketplace system for managing used item sales.
+```
