@@ -127,3 +127,12 @@ backend-app/routes/api.php - Backend API routes
 backend-app/app/Http/Controllers/Api/ - Backend API controllers
 backend-app/app/Models/ - Laravel database models
 backend-app/database/migrations/ - Database table structure files
+
+## Deployment Note
+
+The GitHub Pages version can display the frontend demo, but GitHub Pages cannot run the Laravel backend or store shared user uploads by itself.
+For a real online marketplace where all users can register, upload products, send messages, and see shared data, the Laravel backend, MySQL database, and image storage must also be deployed to a server.
+
+## Conclusion
+
+Vendora demonstrates how a full-stack web application can be used to support second-hand buying and selling. By combining a React frontend, Laravel backend, SQL database, authentication, image uploads, messaging, favorites, and admin tools, the project provides a practical marketplace system for managing used item sales.
