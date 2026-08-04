@@ -23,7 +23,7 @@ class AuthController extends Controller
         return response()->json([
             'providers' => collect($this->oauthProviders)
                 ->mapWithKeys(fn (string $provider) => [
-                    $provider => $this->isProviderConfigured($provider),
+                    $provider => $this->isProviderAvailable($provider),
                 ]),
         ]);
     }
@@ -114,6 +114,10 @@ class AuthController extends Controller
 
         if ($provider === 'apple') {
             if (! $this->isProviderConfigured($provider)) {
+                if ($this->isDemoOAuthEnabled()) {
+                    return $this->demoOAuthRedirect($provider);
+                }
+
                 return response()->json([
                     'message' => 'Apple OAuth is not configured yet.',
                 ], 422);
@@ -125,6 +129,10 @@ class AuthController extends Controller
         }
 
         if (! $this->isProviderConfigured($provider)) {
+            if ($this->isDemoOAuthEnabled()) {
+                return $this->demoOAuthRedirect($provider);
+            }
+
             return response()->json([
                 'message' => ucfirst($provider).' OAuth is not configured yet.',
             ], 422);
@@ -255,6 +263,41 @@ class AuthController extends Controller
             && config("services.$provider.client_secret")
             && config("services.$provider.redirect")
         );
+    }
+
+    private function isProviderAvailable(string $provider): bool
+    {
+        return $this->isProviderConfigured($provider) || $this->isDemoOAuthEnabled();
+    }
+
+    private function isDemoOAuthEnabled(): bool
+    {
+        return app()->environment('local') || (bool) env('OAUTH_DEMO_ENABLED', false);
+    }
+
+    private function demoOAuthRedirect(string $provider): JsonResponse
+    {
+        $user = User::firstOrCreate(
+            [
+                'provider' => $provider,
+                'provider_id' => "demo-$provider",
+            ],
+            [
+                'name' => ucfirst($provider).' Demo User',
+                'email' => "$provider.demo@vendora.local",
+                'email_verified_at' => now(),
+                'password' => null,
+                'role' => 'buyer',
+            ],
+        );
+
+        $token = $user->createToken('marketplace-token')->plainTextToken;
+        $payload = rawurlencode(base64_encode(json_encode($user)));
+        $frontendUrl = rtrim(env('FRONTEND_URL', 'http://127.0.0.1:5180'), '/');
+
+        return response()->json([
+            'url' => "$frontendUrl?oauth_token=$token&oauth_user=$payload",
+        ]);
     }
 
     private function findOrCreateOAuthUser(
