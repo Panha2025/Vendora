@@ -1,0 +1,11 @@
+.env
+.phpunit.result.cache
+node_modules
+vendor
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+database/database.sqlite
+database/database.sqlite.backup
