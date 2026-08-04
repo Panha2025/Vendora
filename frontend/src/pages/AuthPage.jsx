@@ -29,6 +29,9 @@ function AuthPage({
   const [socialProviders, setSocialProviders] = useState(null)
 
   const isRegistering = mode === 'register'
+  const selectedProviderKey = selectedProvider.toLowerCase()
+  const isSelectedProviderConfigured =
+    !selectedProvider || socialProviders?.[selectedProviderKey] !== false
 
   useEffect(() => {
     let isActive = true
@@ -59,6 +62,15 @@ function AuthPage({
 
   async function handleSubmit(event) {
     event.preventDefault()
+
+    const validationMessage = validateForm()
+
+    if (validationMessage) {
+      setMessage(validationMessage)
+      setMessageType('error')
+      return
+    }
+
     setIsLoading(true)
     setMessage('')
     setMessageType('info')
@@ -100,21 +112,59 @@ function AuthPage({
   }
 
   function openSocialDialog(provider) {
-    const providerKey = provider.toLowerCase()
-
-    if (socialProviders && socialProviders[providerKey] === false) {
-      setMessage(`${provider} login needs provider credentials in the backend environment.`)
-      setMessageType('error')
-      return
-    }
-
     setMessage('')
     setSelectedProvider(provider)
   }
 
+  function switchMode(nextMode) {
+    setMode(nextMode)
+    setMessage('')
+    setMessageType('info')
+    setSelectedProvider('')
+  }
+
+  function validateForm() {
+    const email = form.email.trim()
+    const password = form.password
+
+    if (isRegistering && !form.name.trim()) {
+      return 'Please enter your full name.'
+    }
+
+    if (isRegistering && !form.phone.trim()) {
+      return 'Please enter your phone number.'
+    }
+
+    if (!email) {
+      return 'Please enter your email address.'
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return 'Please enter a valid email address.'
+    }
+
+    if (!password) {
+      return 'Please enter your password.'
+    }
+
+    if (isRegistering && password.length < 8) {
+      return 'Password must be at least 8 characters.'
+    }
+
+    if (isRegistering && !form.password_confirmation) {
+      return 'Please confirm your password.'
+    }
+
+    if (isRegistering && password !== form.password_confirmation) {
+      return 'Password and confirm password must match.'
+    }
+
+    return ''
+  }
+
   return (
     <main className="auth-page">
-      <form className="auth-card plain-auth-card" onSubmit={handleSubmit}>
+      <form className="auth-card plain-auth-card" noValidate onSubmit={handleSubmit}>
         {onBack && (
           <button className="auth-back-button" type="button" onClick={onBack}>
             {t('backToMarketplace')}
@@ -238,7 +288,7 @@ function AuthPage({
           <button
             className="link-button"
             type="button"
-            onClick={() => setMode(isRegistering ? 'login' : 'register')}
+            onClick={() => switchMode(isRegistering ? 'login' : 'register')}
           >
             {isRegistering ? t('login') : t('register')}
           </button>
@@ -252,7 +302,7 @@ function AuthPage({
           <div className="social-login-buttons">
             <button
               type="button"
-              disabled={isLoading || socialProviders?.google === false}
+              disabled={isLoading}
               title={
                 socialProviders?.google === false
                   ? 'Google login is not configured yet.'
@@ -282,7 +332,7 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading || socialProviders?.facebook === false}
+              disabled={isLoading}
               title={
                 socialProviders?.facebook === false
                   ? 'Facebook login is not configured yet.'
@@ -304,7 +354,7 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading || socialProviders?.apple === false}
+              disabled={isLoading}
               title={
                 socialProviders?.apple === false
                   ? 'Apple login is not configured yet.'
@@ -344,8 +394,9 @@ function AuthPage({
               </div>
               <h2 id="connect-title">Continue with {selectedProvider}</h2>
               <p>
-                Vendora will create or open your marketplace account using
-                your {selectedProvider} sign-in.
+                {isSelectedProviderConfigured
+                  ? `Vendora will create or open your marketplace account using your ${selectedProvider} sign-in.`
+                  : `${selectedProvider} login is not connected yet. Add the ${selectedProvider} OAuth credentials in the backend environment, then redeploy the backend.`}
               </p>
               <div className="connect-dialog-actions">
                 <button
@@ -356,10 +407,14 @@ function AuthPage({
                 </button>
                 <button
                   type="button"
-                  disabled={isLoading}
+                  disabled={isLoading || !isSelectedProviderConfigured}
                   onClick={() => handleSocialLogin()}
                 >
-                  {isLoading ? 'Connecting...' : `Connect ${selectedProvider}`}
+                  {isLoading
+                    ? 'Connecting...'
+                    : isSelectedProviderConfigured
+                      ? `Connect ${selectedProvider}`
+                      : 'Setup Required'}
                 </button>
               </div>
             </section>
