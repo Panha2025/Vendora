@@ -125,11 +125,18 @@ export async function registerUser(payload) {
 
 export async function socialLoginUser(provider) {
   const normalizedProvider = provider.toLowerCase()
-  const response = await fetch(`${API_URL}/auth/${normalizedProvider}/redirect`, {
-    headers: {
-      Accept: 'application/json',
-    },
-  })
+  let response
+
+  try {
+    response = await fetch(`${API_URL}/auth/${normalizedProvider}/redirect`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+  } catch {
+    throw new Error('Cannot connect to the server. Please start the backend.')
+  }
+
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
@@ -138,6 +145,21 @@ export async function socialLoginUser(provider) {
 
   window.location.assign(data.url)
   return new Promise(() => {})
+}
+
+export async function getSocialLoginProviders() {
+  const response = await fetch(`${API_URL}/auth/providers`, {
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Could not load social login providers')
+  }
+
+  return data.providers || {}
 }
 
 export async function logoutUser() {

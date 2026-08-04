@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/auth/providers', [AuthController::class, 'oauthProviders']);
 Route::get('/auth/{provider}/redirect', [AuthController::class, 'oauthRedirect']);
 Route::match(['get', 'post'], '/auth/{provider}/callback', [AuthController::class, 'oauthCallback']);
 Route::get('/products', [ProductController::class, 'index']);

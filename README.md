@@ -136,6 +136,31 @@ Environment Variable: VITE_API_URL=https://your-backend-domain.com/api
 
 For a real online marketplace where all users can register, upload products, send messages, and see shared data, the Laravel backend, MySQL database, and image storage must also be deployed to a server.
 
+## Social Login Setup
+
+Google, Facebook, and Apple login need real OAuth credentials from each provider. Add them to `backend/.env`:
+
+```env
+FRONTEND_URL=https://your-frontend-domain.com
+APP_URL=https://your-backend-domain.com
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI="${APP_URL}/api/auth/google/callback"
+
+FACEBOOK_CLIENT_ID=
+FACEBOOK_CLIENT_SECRET=
+FACEBOOK_REDIRECT_URI="${APP_URL}/api/auth/facebook/callback"
+
+APPLE_CLIENT_ID=
+APPLE_TEAM_ID=
+APPLE_KEY_ID=
+APPLE_PRIVATE_KEY=
+APPLE_REDIRECT_URI="${APP_URL}/api/auth/apple/callback"
+```
+
+The frontend checks `/api/auth/providers` and only enables social login buttons when the matching backend credentials are configured.
+
 ## Conclusion
 
 Vendora demonstrates how a full-stack web application can be used to support second-hand buying and selling. By combining a React frontend, Laravel backend, SQL database, authentication, image uploads, messaging, favorites, and admin tools, the project provides a practical marketplace system for managing used item sales.

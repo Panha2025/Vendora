@@ -18,6 +18,16 @@ class AuthController extends Controller
 {
     private array $oauthProviders = ['google', 'facebook', 'apple'];
 
+    public function oauthProviders(): JsonResponse
+    {
+        return response()->json([
+            'providers' => collect($this->oauthProviders)
+                ->mapWithKeys(fn (string $provider) => [
+                    $provider => $this->isProviderConfigured($provider),
+                ]),
+        ]);
+    }
+
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -103,13 +113,7 @@ class AuthController extends Controller
         abort_unless(in_array($provider, $this->oauthProviders, true), 404);
 
         if ($provider === 'apple') {
-            $configured = config('services.apple.client_id')
-                && config('services.apple.team_id')
-                && config('services.apple.key_id')
-                && config('services.apple.private_key')
-                && config('services.apple.redirect');
-
-            if (! $configured) {
+            if (! $this->isProviderConfigured($provider)) {
                 return response()->json([
                     'message' => 'Apple OAuth is not configured yet.',
                 ], 422);
@@ -120,11 +124,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $configured = config("services.$provider.client_id")
-            && config("services.$provider.client_secret")
-            && config("services.$provider.redirect");
-
-        if (! $configured) {
+        if (! $this->isProviderConfigured($provider)) {
             return response()->json([
                 'message' => ucfirst($provider).' OAuth is not configured yet.',
             ], 422);
@@ -169,13 +169,7 @@ class AuthController extends Controller
 
     private function appleAuthorizationUrl(): string
     {
-        $configured = config('services.apple.client_id')
-            && config('services.apple.team_id')
-            && config('services.apple.key_id')
-            && config('services.apple.private_key')
-            && config('services.apple.redirect');
-
-        abort_unless($configured, 422, 'Apple OAuth is not configured yet.');
+        abort_unless($this->isProviderConfigured('apple'), 422, 'Apple OAuth is not configured yet.');
 
         return 'https://appleid.apple.com/auth/authorize?'.http_build_query([
             'client_id' => config('services.apple.client_id'),
@@ -242,6 +236,25 @@ class AuthController extends Controller
         $payload .= str_repeat('=', (4 - strlen($payload) % 4) % 4);
 
         return json_decode(base64_decode(strtr($payload, '-_', '+/')), true) ?: [];
+    }
+
+    private function isProviderConfigured(string $provider): bool
+    {
+        if ($provider === 'apple') {
+            return (bool) (
+                config('services.apple.client_id')
+                && config('services.apple.team_id')
+                && config('services.apple.key_id')
+                && config('services.apple.private_key')
+                && config('services.apple.redirect')
+            );
+        }
+
+        return (bool) (
+            config("services.$provider.client_id")
+            && config("services.$provider.client_secret")
+            && config("services.$provider.redirect")
+        );
     }
 
     private function findOrCreateOAuthUser(

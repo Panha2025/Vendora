@@ -1,5 +1,10 @@
-import { useState } from 'react'
-import { loginUser, registerUser, socialLoginUser } from '../api/auth'
+import { useEffect, useState } from 'react'
+import {
+  getSocialLoginProviders,
+  loginUser,
+  registerUser,
+  socialLoginUser,
+} from '../api/auth'
 
 function AuthPage({
   initialMode = 'login',
@@ -21,8 +26,29 @@ function AuthPage({
   const [messageType, setMessageType] = useState('info')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
+  const [socialProviders, setSocialProviders] = useState(null)
 
   const isRegistering = mode === 'register'
+
+  useEffect(() => {
+    let isActive = true
+
+    getSocialLoginProviders()
+      .then((providers) => {
+        if (isActive) {
+          setSocialProviders(providers)
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setSocialProviders({})
+        }
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   function updateField(event) {
     setForm((current) => ({
@@ -71,6 +97,19 @@ function AuthPage({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function openSocialDialog(provider) {
+    const providerKey = provider.toLowerCase()
+
+    if (socialProviders && socialProviders[providerKey] === false) {
+      setMessage(`${provider} login needs provider credentials in the backend environment.`)
+      setMessageType('error')
+      return
+    }
+
+    setMessage('')
+    setSelectedProvider(provider)
   }
 
   return (
@@ -213,8 +252,13 @@ function AuthPage({
           <div className="social-login-buttons">
             <button
               type="button"
-              disabled={isLoading}
-              onClick={() => setSelectedProvider('Google')}
+              disabled={isLoading || socialProviders?.google === false}
+              title={
+                socialProviders?.google === false
+                  ? 'Google login is not configured yet.'
+                  : 'Continue with Google'
+              }
+              onClick={() => openSocialDialog('Google')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -238,8 +282,13 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading}
-              onClick={() => setSelectedProvider('Facebook')}
+              disabled={isLoading || socialProviders?.facebook === false}
+              title={
+                socialProviders?.facebook === false
+                  ? 'Facebook login is not configured yet.'
+                  : 'Continue with Facebook'
+              }
+              onClick={() => openSocialDialog('Facebook')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -255,8 +304,13 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading}
-              onClick={() => setSelectedProvider('Apple')}
+              disabled={isLoading || socialProviders?.apple === false}
+              title={
+                socialProviders?.apple === false
+                  ? 'Apple login is not configured yet.'
+                  : 'Continue with Apple'
+              }
+              onClick={() => openSocialDialog('Apple')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
