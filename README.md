@@ -38,7 +38,7 @@ The application also includes user authentication, wishlist functionality, buyer
 - Light and dark mode
 - Multi-language support: English, Khmer, and Chinese
 - Responsive design for desktop and mobile devices
-- GitHub Pages demo support using browser storage
+- Demo support using browser storage when the backend is unavailable
 
 ## Technologies Used
 
@@ -106,27 +106,36 @@ The database connection is configured in the Laravel `.env` file.
 ## Project Structure
 
 ```text
-my-react-app/ - React frontend application
-backend-app/ - Laravel backend API
-my-react-app/src/api/ - Frontend API request files
-my-react-app/src/components/ - Reusable frontend components
-my-react-app/src/pages/ - Main pages such as Marketplace, Auth, and Admin
-my-react-app/src/sections/ - Page sections such as product detail, messages, and post item form
-my-react-app/src/data/ - Sample product data
-my-react-app/src/i18n.js - Language translation data
-backend-app/routes/api.php - Backend API routes
-backend-app/app/Http/Controllers/Api/ - Backend API controllers
-backend-app/app/Models/ - Laravel database models
-backend-app/database/migrations/ - Database table structure files
+Vendora/
+  frontend/ - React and Vite frontend application
+  backend/ - Laravel backend API
+  README.md - Project overview and setup notes
+
+frontend/src/api/ - Frontend API request files
+frontend/src/components/ - Reusable frontend components
+frontend/src/pages/ - Main pages such as Marketplace, Auth, and Admin
+frontend/src/sections/ - Page sections such as product detail, messages, and post item form
+frontend/src/data/ - Sample product data
+frontend/src/i18n.js - Language translation data
+backend/routes/api.php - Backend API routes
+backend/app/Http/Controllers/Api/ - Backend API controllers
+backend/app/Models/ - Laravel database models
+backend/database/migrations/ - Database table structure files
 ```
 
 ## Deployment Note
 
-The GitHub Pages version can display the frontend demo, but GitHub Pages cannot run the Laravel backend or store shared user uploads by itself.
+The React frontend can be hosted on Vercel. Use these settings:
+
+```text
+Root Directory: frontend
+Build Command: npm run build
+Output Directory: dist
+Environment Variable: VITE_API_URL=https://your-backend-domain.com/api
+```
 
 For a real online marketplace where all users can register, upload products, send messages, and see shared data, the Laravel backend, MySQL database, and image storage must also be deployed to a server.
 
 ## Conclusion
 
 Vendora demonstrates how a full-stack web application can be used to support second-hand buying and selling. By combining a React frontend, Laravel backend, SQL database, authentication, image uploads, messaging, favorites, and admin tools, the project provides a practical marketplace system for managing used item sales.
-```

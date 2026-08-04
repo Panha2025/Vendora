@@ -20,9 +20,10 @@ function App() {
     localStorage.setItem('secondloop_language', nextLanguage)
   }
 
-  async function handleLogout() {
-    await logoutUser()
+  function handleLogout() {
     setUser(null)
+    setIsAuthOpen(false)
+    logoutUser().catch(() => null)
   }
 
   function handleRequireAuth(mode = 'register') {

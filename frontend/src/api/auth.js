@@ -2,6 +2,22 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 const AUTH_KEY = 'secondloop_user'
 const TOKEN_KEY = 'secondloop_token'
 
+function isGitHubPagesDemo() {
+  return window.location.hostname.endsWith('github.io')
+}
+
+function createDemoSession(payload) {
+  return {
+    token: `demo-${Date.now()}`,
+    user: {
+      id: `demo-${Date.now()}`,
+      email: payload.email,
+      name: payload.name || payload.email?.split('@')[0] || 'Demo Seller',
+      role: 'user',
+    },
+  }
+}
+
 function saveSession({ token, user }) {
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(AUTH_KEY, JSON.stringify(user))
@@ -39,6 +55,10 @@ async function sendAuthRequest(endpoint, payload) {
       body: JSON.stringify(payload),
     })
   } catch {
+    if (isGitHubPagesDemo()) {
+      return createDemoSession(payload)
+    }
+
     throw new Error('Cannot connect to the server. Please start the backend.')
   }
 
@@ -123,6 +143,9 @@ export async function socialLoginUser(provider) {
 export async function logoutUser() {
   const token = localStorage.getItem(TOKEN_KEY)
 
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(AUTH_KEY)
+
   if (token && !token.startsWith('demo-')) {
     await fetch(`${API_URL}/logout`, {
       method: 'POST',
@@ -132,7 +155,4 @@ export async function logoutUser() {
       },
     }).catch(() => null)
   }
-
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(AUTH_KEY)
 }

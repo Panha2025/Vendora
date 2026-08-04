@@ -198,7 +198,10 @@ function saveServerListings(listings) {
 }
 
 function getInstantListings() {
-  return mergeListings(getCachedListings(SERVER_LISTING_CACHE_KEY))
+  return mergeListings(
+    getCachedListings(),
+    getCachedListings(SERVER_LISTING_CACHE_KEY),
+  )
 }
 
 function mergeListings(...listingGroups) {

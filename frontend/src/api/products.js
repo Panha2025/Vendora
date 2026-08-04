@@ -2,6 +2,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 const AUTH_KEY = 'secondloop_user'
 const TOKEN_KEY = 'secondloop_token'
 
+function isGitHubPagesDemo() {
+  return window.location.hostname.endsWith('github.io')
+}
+
 function getAuthToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
@@ -131,14 +135,24 @@ export async function createProduct(product, imageFiles = []) {
     formData.append('images[]', file)
   })
 
-  const response = await fetch(`${API_URL}/products`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  })
+  let response
+
+  try {
+    response = await fetch(`${API_URL}/products`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    })
+  } catch {
+    if (isGitHubPagesDemo()) {
+      return { product, demo: true }
+    }
+
+    throw new Error('Could not connect to the server.')
+  }
 
   const data = await response.json().catch(() => ({}))
 

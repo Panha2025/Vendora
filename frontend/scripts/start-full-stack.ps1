@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$backend = Join-Path $root 'backend-app'
-$frontend = Join-Path $root 'my-react-app'
+$backend = Join-Path $root 'backend'
+$frontend = Join-Path $root 'frontend'
 $url = 'http://127.0.0.1:5180'
 
 function Stop-ListeningProcess {
