@@ -18,7 +18,8 @@ class ProductController extends Controller
             'products' => Product::with('seller')
                 ->withCount('favoritedBy')
                 ->latest()
-                ->get(),
+                ->get()
+                ->map(fn (Product $product) => $this->withPublicImageUrls($product)),
         ]);
     }
 
@@ -45,14 +46,14 @@ class ProductController extends Controller
         $product = $request->user()->products()->create($validated);
 
         return response()->json([
-            'product' => $product->load('seller')->loadCount('favoritedBy'),
+            'product' => $this->withPublicImageUrls($product->load('seller')->loadCount('favoritedBy')),
         ], 201);
     }
 
     public function show(Product $product): JsonResponse
     {
         return response()->json([
-            'product' => $product->load('seller')->loadCount('favoritedBy'),
+            'product' => $this->withPublicImageUrls($product->load('seller')->loadCount('favoritedBy')),
         ]);
     }
 
@@ -62,6 +63,12 @@ class ProductController extends Controller
         $imageUrl = $images[$index] ?? null;
 
         abort_unless($imageUrl, 404);
+
+        $localPath = $this->localStoragePath($imageUrl);
+
+        if ($localPath && Storage::disk('public')->exists($localPath)) {
+            return response()->file(Storage::disk('public')->path($localPath));
+        }
 
         return redirect()->away($imageUrl);
     }
@@ -109,7 +116,7 @@ class ProductController extends Controller
         $product->update($validated);
 
         return response()->json([
-            'product' => $product->load('seller')->loadCount('favoritedBy'),
+            'product' => $this->withPublicImageUrls($product->load('seller')->loadCount('favoritedBy')),
         ]);
     }
 
@@ -176,5 +183,34 @@ class ProductController extends Controller
         abort_unless($response->successful(), 502, 'Could not upload product image.');
 
         return $response->json('secure_url');
+    }
+
+    private function withPublicImageUrls(Product $product): Product
+    {
+        $images = $product->images ?? [];
+
+        $product->setAttribute('images', collect($images)
+            ->keys()
+            ->map(fn ($index) => $this->productImageUrl($product, $index))
+            ->all());
+
+        return $product;
+    }
+
+    private function productImageUrl(Product $product, int $index): string
+    {
+        return rtrim(request()->getSchemeAndHttpHost(), '/')."/api/products/{$product->id}/images/{$index}";
+    }
+
+    private function localStoragePath(string $imageUrl): ?string
+    {
+        $path = parse_url($imageUrl, PHP_URL_PATH) ?: $imageUrl;
+        $storagePrefix = '/storage/';
+
+        if (!str_contains($path, $storagePrefix)) {
+            return null;
+        }
+
+        return ltrim(Str::after($path, $storagePrefix), '/');
     }
 }
