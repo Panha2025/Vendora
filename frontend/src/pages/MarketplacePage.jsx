@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { updateProfile } from '../api/auth'
 import { addFavorite, getFavoriteProducts, removeFavorite } from '../api/favorites'
 import {
   getConversations,
@@ -138,6 +139,10 @@ const appIconPaths = {
     <path key="3" d="M13.5 10.5v5" />,
     <path key="4" d="M11 13h5" />,
   ],
+  settings: [
+    <circle key="1" cx="12" cy="12" r="3" />,
+    <path key="2" d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 0 1 7.1 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 0 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 0 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z" />,
+  ],
   theme: [
     <path key="1" d="M12 3a7 7 0 1 0 7 7 5 5 0 0 1-7-7Z" />,
   ],
@@ -176,6 +181,100 @@ function UserAvatar({ user, label = user?.name || 'User' }) {
         initials
       )}
     </span>
+  )
+}
+
+function AccountSettingsSection({ onUserUpdate, user }) {
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    phone: user?.phone || '',
+    avatar: null,
+  })
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '')
+  const [message, setMessage] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  function updateField(event) {
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }))
+  }
+
+  function updateAvatar(event) {
+    const file = event.target.files?.[0] || null
+
+    setForm((current) => ({ ...current, avatar: file }))
+    setAvatarPreview(file ? URL.createObjectURL(file) : user?.avatar || '')
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setIsSaving(true)
+    setMessage('')
+
+    try {
+      const nextUser = await updateProfile(form)
+      onUserUpdate?.(nextUser)
+      setForm((current) => ({ ...current, avatar: null }))
+      setAvatarPreview(nextUser.avatar || '')
+      setMessage('Settings updated.')
+    } catch (error) {
+      setMessage(error.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <section className="settings-panel" aria-label="Account settings">
+      <div className="settings-header">
+        <div>
+          <span>Account Settings</span>
+          <h2>Profile details</h2>
+        </div>
+        <UserAvatar user={{ ...user, avatar: avatarPreview }} />
+      </div>
+
+      <form className="settings-form" onSubmit={handleSubmit}>
+        <label className="settings-avatar-field">
+          <span>Profile picture</span>
+          <div className="avatar-preview-circle">
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Profile preview" />
+            ) : (
+              <span>+</span>
+            )}
+          </div>
+          <input
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            name="avatar"
+            type="file"
+            onChange={updateAvatar}
+          />
+        </label>
+
+        <div className="settings-grid">
+          <label>
+            <span>Full name</span>
+            <input name="name" value={form.name} onChange={updateField} required />
+          </label>
+          <label>
+            <span>Phone number</span>
+            <input name="phone" type="tel" value={form.phone} onChange={updateField} required />
+          </label>
+          <label>
+            <span>Email address</span>
+            <input value={user?.email || ''} disabled readOnly />
+          </label>
+        </div>
+
+        {message && <p className="settings-message">{message}</p>}
+        <button className="settings-save-button" type="submit" disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save changes'}
+        </button>
+      </form>
+    </section>
   )
 }
 
@@ -350,6 +449,7 @@ function MarketplacePage({
   onLanguageChange,
   onLogout,
   onRequireAuth,
+  onUserUpdate,
   t,
   user,
 }) {
@@ -676,6 +776,38 @@ function MarketplacePage({
     } catch (error) {
       setNotice(error.message)
     }
+  }
+
+  function handleProfileUpdate(nextUser) {
+    onUserUpdate?.(nextUser)
+    setListings((current) =>
+      current.map((product) =>
+        isSameUserId(product.sellerId, nextUser.id)
+          ? {
+              ...product,
+              seller: nextUser.name,
+              sellerAvatar: nextUser.avatar,
+              details: {
+                ...(product.details || {}),
+                Phone: nextUser.phone || product.details?.Phone,
+              },
+            }
+          : product,
+      ),
+    )
+    setSelectedProduct((current) =>
+      current && isSameUserId(current.sellerId, nextUser.id)
+        ? {
+            ...current,
+            seller: nextUser.name,
+            sellerAvatar: nextUser.avatar,
+            details: {
+              ...(current.details || {}),
+              Phone: nextUser.phone || current.details?.Phone,
+            },
+          }
+        : current,
+    )
   }
 
   async function handleMessage(product) {
@@ -1064,6 +1196,9 @@ function MarketplacePage({
                 </button>
                 {isAccountMenuOpen && (
                   <div className="account-menu-panel">
+                    <button type="button" onClick={() => showDashboardView('settings')}>
+                      Settings
+                    </button>
                     <button type="button" onClick={onLogout}>
                       {t('logout')}?
                     </button>
@@ -1103,6 +1238,10 @@ function MarketplacePage({
                     <button type="button" onClick={() => showDashboardView('favorites')}>
                       <AppIcon name="favorite" />
                       {t('wishlist')}
+                    </button>
+                    <button type="button" onClick={() => showDashboardView('settings')}>
+                      <AppIcon name="settings" />
+                      Settings
                     </button>
                     <button type="button" onClick={scrollToPostItem}>
                       <AppIcon name="post" />
@@ -1198,9 +1337,17 @@ function MarketplacePage({
               <AppIcon name="listing" />
               {t('myListings')}
             </button>
+            <button
+              className={activeView === 'settings' ? 'active' : ''}
+              type="button"
+              onClick={() => showDashboardView('settings')}
+            >
+              <AppIcon name="settings" />
+              Settings
+            </button>
           </nav>
 
-          {activeView !== 'messages' && (
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <>
               <div className="sidebar-block">
                 <h3>{t('categories')}</h3>
@@ -1276,7 +1423,7 @@ function MarketplacePage({
         </aside>
 
         <main className="dashboard-main" id="top">
-          {activeView !== 'messages' && (
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <section className="dashboard-promo" aria-label="Marketplace promotions">
               <div className="promo-hero">
                 <div className="promo-copy">
@@ -1322,7 +1469,7 @@ function MarketplacePage({
             </section>
           )}
 
-          {activeView !== 'messages' && (
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <section className="mobile-browse-options" aria-label="Mobile browse options">
               <button
                 aria-expanded={isMobileOptionsOpen}
@@ -1380,6 +1527,17 @@ function MarketplacePage({
                     >
                       <AppIcon name="listing" />
                       {t('myListings')}
+                    </button>
+                    <button
+                      className={activeView === 'settings' ? 'active' : ''}
+                      type="button"
+                      onClick={() => {
+                        showDashboardView('settings')
+                        setIsMobileOptionsOpen(false)
+                      }}
+                    >
+                      <AppIcon name="settings" />
+                      Settings
                     </button>
                   </nav>
 
@@ -1477,7 +1635,7 @@ function MarketplacePage({
             </div>
           )}
 
-          {activeView !== 'messages' && (
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <section className="dashboard-toolbar" aria-label="Browse controls">
               <label className="sort-control">
                 <span>{t('sortBy')}</span>
@@ -1506,7 +1664,14 @@ function MarketplacePage({
             />
           )}
 
-          {activeView !== 'messages' && (
+          {activeView === 'settings' && (
+            <AccountSettingsSection
+              onUserUpdate={handleProfileUpdate}
+              user={user}
+            />
+          )}
+
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <section className="dashboard-grid" id="browse-products" aria-label="Product listings">
               {paginatedProducts.map((product) => (
                 <ProductCard
@@ -1524,14 +1689,14 @@ function MarketplacePage({
             </section>
           )}
 
-          {activeView !== 'messages' && !filteredProducts.length && (
+          {activeView !== 'messages' && activeView !== 'settings' && !filteredProducts.length && (
             <section className="plain-panel">
               <h2>{t('noItemsFound')}</h2>
               <p>Try changing your search, category, price, or condition filters.</p>
             </section>
           )}
 
-          {activeView !== 'messages' && (
+          {activeView !== 'messages' && activeView !== 'settings' && (
             <div className="pagination-row" aria-label="Pagination">
               <button
                 disabled={currentPage === 1}

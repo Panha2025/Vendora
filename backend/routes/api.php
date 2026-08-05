@@ -24,6 +24,7 @@ Route::get('/products/{product}', [ProductController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::apiResource('products', ProductController::class)->except(['index', 'show']);

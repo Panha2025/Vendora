@@ -102,6 +102,46 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['required', 'string', 'max:40'],
+            'avatar' => ['sometimes', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+        ]);
+
+        $validated['name'] = trim($validated['name']);
+        $validated['phone'] = trim($validated['phone']);
+
+        $duplicateProfile = User::where('name', $validated['name'])
+            ->where('phone', $validated['phone'])
+            ->whereKeyNot($user->id)
+            ->exists();
+
+        if ($duplicateProfile) {
+            throw ValidationException::withMessages([
+                'phone' => ['An account already exists with this name and phone number.'],
+            ]);
+        }
+
+        $updates = [
+            'name' => $validated['name'],
+            'phone' => $validated['phone'],
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $updates['avatar'] = $this->storeAvatar($request->file('avatar'));
+        }
+
+        $user->forceFill($updates)->save();
+
+        return response()->json([
+            'user' => $user->fresh(),
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

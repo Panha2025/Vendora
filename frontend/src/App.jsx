@@ -37,6 +37,10 @@ function App() {
     setIsAuthOpen(false)
   }
 
+  function handleUserUpdate(nextUser) {
+    setUser(nextUser)
+  }
+
   if (!user && isAuthOpen) {
     return (
       <AuthPage
@@ -68,6 +72,7 @@ function App() {
       onLanguageChange={changeLanguage}
       onLogout={handleLogout}
       onRequireAuth={handleRequireAuth}
+      onUserUpdate={handleUserUpdate}
       t={t}
       user={user}
     />

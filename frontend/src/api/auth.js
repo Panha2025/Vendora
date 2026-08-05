@@ -23,6 +23,10 @@ function saveSession({ token, user }) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(user))
 }
 
+function saveUser(user) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(user))
+}
+
 function consumeOAuthRedirectSession() {
   const params = new URLSearchParams(window.location.search)
   const token = params.get('oauth_token')
@@ -188,4 +192,48 @@ export async function logoutUser() {
       },
     }).catch(() => null)
   }
+}
+
+export async function updateProfile(payload) {
+  const token = localStorage.getItem(TOKEN_KEY)
+
+  if (!token || token.startsWith('demo-')) {
+    throw new Error('Please log in again before updating your settings.')
+  }
+
+  const formData = new FormData()
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value)
+    }
+  })
+
+  const response = await fetch(`${API_URL}/user/profile`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(AUTH_KEY)
+      throw new Error('Your session expired. Please log in again.')
+    }
+
+    const firstFieldError = data.errors
+      ? Object.values(data.errors).flat().at(0)
+      : null
+
+    throw new Error(firstFieldError || data.message || 'Could not update your settings.')
+  }
+
+  saveUser(data.user)
+  return data.user
 }
