@@ -228,3 +228,37 @@ export async function updateProduct(productId, product, imageItems = []) {
     product: mapApiProduct(data.product),
   }
 }
+
+export async function deleteProduct(productId) {
+  const token = localStorage.getItem(TOKEN_KEY)
+
+  if (!token || token.startsWith('demo-')) {
+    throw new Error('Please log in again before deleting this item.')
+  }
+
+  const response = await fetch(`${API_URL}/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(AUTH_KEY)
+      throw new Error('Your session expired. Please log in again.')
+    }
+
+    if (response.status === 403) {
+      throw new Error('Only the seller can delete this item.')
+    }
+
+    throw new Error(data.message || 'Could not delete item')
+  }
+
+  return data
+}

@@ -1,5 +1,7 @@
 function ProductCard({
+  canDelete = false,
   isFavorite,
+  onDelete,
   onMessage,
   onShowDetail,
   onToggleFavorite,
@@ -69,9 +71,19 @@ function ProductCard({
           <button type="button" onClick={() => onShowDetail(product)}>
             {t('moreDetail')}
           </button>
-          <button type="button" onClick={() => onMessage(product)}>
-            {t('message')}
-          </button>
+          {canDelete ? (
+            <button
+              className="danger-action"
+              type="button"
+              onClick={() => onDelete(product)}
+            >
+              Delete
+            </button>
+          ) : (
+            <button type="button" onClick={() => onMessage(product)}>
+              {t('message')}
+            </button>
+          )}
         </div>
       </div>
     </article>

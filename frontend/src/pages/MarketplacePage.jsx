@@ -6,7 +6,7 @@ import {
   sendConversationMessage,
   startConversation,
 } from '../api/messages'
-import { formatRelativeTime, getProducts } from '../api/products'
+import { deleteProduct, formatRelativeTime, getProducts } from '../api/products'
 import vendoraLogo from '../assets/Vendora_img.png'
 import ProductCard from '../components/ProductCard'
 import { categories, conditions, products } from '../data/products'
@@ -186,6 +186,27 @@ function saveCachedListing(listing) {
     )
   } catch {
     localStorage.removeItem(LISTING_CACHE_KEY)
+  }
+}
+
+function removeCachedListing(listing) {
+  try {
+    const cacheKeys = [LISTING_CACHE_KEY, SERVER_LISTING_CACHE_KEY]
+    const listingKey = listing.apiId ? `api-${listing.apiId}` : String(listing.id)
+
+    cacheKeys.forEach((cacheKey) => {
+      const currentListings = getCachedListings(cacheKey)
+      const nextListings = currentListings.filter((item) => {
+        const itemKey = item.apiId ? `api-${item.apiId}` : String(item.id)
+
+        return itemKey !== listingKey
+      })
+
+      localStorage.setItem(cacheKey, JSON.stringify(nextListings))
+    })
+  } catch {
+    localStorage.removeItem(LISTING_CACHE_KEY)
+    localStorage.removeItem(SERVER_LISTING_CACHE_KEY)
   }
 }
 
@@ -608,6 +629,33 @@ function MarketplacePage({
     if (updatedProduct.apiId) {
       saveServerListings(mergeListings([updatedProduct], getCachedListings(SERVER_LISTING_CACHE_KEY)))
       refreshListingsFromServer({ keepListings: [updatedProduct] }).catch(() => null)
+    }
+  }
+
+  async function handleDeleteListing(product) {
+    if (!isOwnListing(product)) {
+      setNotice('Only the seller can delete this item.')
+      return
+    }
+
+    const confirmed = window.confirm(`Delete "${product.title}" from your listings?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      if (product.apiId) {
+        await deleteProduct(product.apiId)
+      }
+
+      removeCachedListing(product)
+      setListings((current) => current.filter((item) => item.id !== product.id))
+      setFavoriteIds((current) => current.filter((itemId) => itemId !== product.id))
+      setSelectedProduct((current) => (current?.id === product.id ? null : current))
+      setNotice('Your listing was deleted.')
+    } catch (error) {
+      setNotice(error.message)
     }
   }
 
@@ -1442,14 +1490,16 @@ function MarketplacePage({
             <section className="dashboard-grid" id="browse-products" aria-label="Product listings">
               {paginatedProducts.map((product) => (
                 <ProductCard
+                  canDelete={activeView === 'listings' && isOwnListing(product)}
                   isFavorite={favoriteIds.includes(product.id)}
-                key={product.id}
-                product={product}
-                t={t}
-                onMessage={handleMessage}
-                onShowDetail={openProductDetail}
-                onToggleFavorite={toggleFavorite}
-              />
+                  key={product.id}
+                  product={product}
+                  t={t}
+                  onDelete={handleDeleteListing}
+                  onMessage={handleMessage}
+                  onShowDetail={openProductDetail}
+                  onToggleFavorite={toggleFavorite}
+                />
               ))}
             </section>
           )}

@@ -3170,6 +3170,17 @@ progress::-webkit-progress-value {
   background: #0969f6;
 }
 
+.dashboard-card-actions button.danger-action {
+  color: #fff;
+  border-color: #dc2626;
+  background: #dc2626;
+}
+
+.dashboard-card-actions button.danger-action:hover {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+
 @keyframes productCardPress {
   0% {
     transform: translateY(-3px) scale(1);
