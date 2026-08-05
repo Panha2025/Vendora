@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -43,13 +43,48 @@ async function createAvatarFile(source, sourceName, crop) {
 function ProfileCropper({ fileName, onCancel, onSave, source }) {
   const [crop, setCrop] = useState({ x: 0, y: 0, scale: 1 })
   const [isSaving, setIsSaving] = useState(false)
+  const dragRef = useRef(null)
 
   function updateCrop(nextCrop) {
-    setCrop({
-      x: Math.max(-1, Math.min(1, nextCrop.x ?? crop.x)),
-      y: Math.max(-1, Math.min(1, nextCrop.y ?? crop.y)),
-      scale: Math.max(1, Math.min(4, nextCrop.scale ?? crop.scale)),
+    setCrop((current) => ({
+      x: Math.max(-1, Math.min(1, nextCrop.x ?? current.x)),
+      y: Math.max(-1, Math.min(1, nextCrop.y ?? current.y)),
+      scale: Math.max(1, Math.min(4, nextCrop.scale ?? current.scale)),
+    }))
+  }
+
+  function startDrag(event) {
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      crop,
+    }
+  }
+
+  function moveDrag(event) {
+    const drag = dragRef.current
+
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return
+    }
+
+    updateCrop({
+      x: drag.crop.x + (event.clientX - drag.startX) / 180,
+      y: drag.crop.y + (event.clientY - drag.startY) / 180,
     })
+  }
+
+  function endDrag(event) {
+    if (dragRef.current?.pointerId === event.pointerId) {
+      dragRef.current = null
+    }
+  }
+
+  function zoomWithWheel(event) {
+    event.preventDefault()
+    updateCrop({ scale: crop.scale + event.deltaY * -0.003 })
   }
 
   async function saveCrop() {
@@ -74,7 +109,15 @@ function ProfileCropper({ fileName, onCancel, onSave, source }) {
           </button>
         </div>
 
-        <div className="crop-stage profile-crop-stage">
+        <div
+          className="crop-stage profile-crop-stage"
+          role="presentation"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onWheel={zoomWithWheel}
+        >
           <img className="crop-backdrop-image" src={source} alt="" />
           <div className="crop-window profile-crop-window">
             <img
@@ -90,13 +133,33 @@ function ProfileCropper({ fileName, onCancel, onSave, source }) {
         </div>
 
         <div className="crop-controls">
-          <div className="crop-nudge-row" aria-label="Move image">
-            <button type="button" onClick={() => updateCrop({ x: crop.x - 0.08 })}>Left</button>
-            <button type="button" onClick={() => updateCrop({ y: crop.y - 0.08 })}>Up</button>
-            <button type="button" onClick={() => updateCrop({ y: crop.y + 0.08 })}>Down</button>
-            <button type="button" onClick={() => updateCrop({ x: crop.x + 0.08 })}>Right</button>
+          <div className="profile-crop-scrolls">
+            <label>
+              <span>Horizontal</span>
+              <input
+                aria-label="Move profile photo horizontally"
+                max="1"
+                min="-1"
+                step="0.01"
+                type="range"
+                value={crop.x}
+                onChange={(event) => updateCrop({ x: Number(event.target.value) })}
+              />
+            </label>
+            <label>
+              <span>Vertical</span>
+              <input
+                aria-label="Move profile photo vertically"
+                max="1"
+                min="-1"
+                step="0.01"
+                type="range"
+                value={crop.y}
+                onChange={(event) => updateCrop({ y: Number(event.target.value) })}
+              />
+            </label>
           </div>
-          <label>
+          <label className="profile-crop-zoom">
             <span>Zoom</span>
             <input
               max="4"

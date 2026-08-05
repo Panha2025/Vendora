@@ -33,6 +33,7 @@ function AuthPage({
   const [avatarCropTarget, setAvatarCropTarget] = useState(null)
 
   const isRegistering = mode === 'register'
+  const authTitle = isRegistering ? 'Register' : 'Log In'
   const selectedProviderKey = selectedProvider.toLowerCase()
   const isSelectedProviderConfigured =
     !selectedProvider || socialProviders?.[selectedProviderKey] !== false
@@ -246,7 +247,7 @@ function AuthPage({
         </label>
 
         <div className="plain-auth-header">
-          <h1>{isRegistering ? t('register') : t('login')}</h1>
+          <h1>{authTitle}</h1>
           <p>
             {isRegistering
               ? 'Create your account to start using the marketplace.'
@@ -362,8 +363,8 @@ function AuthPage({
           {isLoading
             ? 'Please wait...'
             : isRegistering
-              ? t('register')
-              : t('login')}
+              ? 'Register'
+              : 'Log In'}
         </button>
 
         <p className="auth-switch-text">
@@ -375,7 +376,7 @@ function AuthPage({
             type="button"
             onClick={() => switchMode(isRegistering ? 'login' : 'register')}
           >
-            {isRegistering ? t('login') : t('register')}
+            {isRegistering ? 'Log In' : 'Register'}
           </button>
         </p>
 

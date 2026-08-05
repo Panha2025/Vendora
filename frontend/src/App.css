@@ -1067,12 +1067,23 @@ progress::-webkit-progress-value {
 
 .profile-crop-stage {
   min-height: min(54vh, 430px);
+  touch-action: none;
 }
 
 .profile-crop-window {
   width: min(78vw, 340px);
   border-radius: 999px;
   aspect-ratio: 1;
+}
+
+.profile-crop-scrolls {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-crop-zoom {
+  padding-top: 2px;
 }
 
 .crop-preview-image {
@@ -1504,12 +1515,12 @@ progress::-webkit-progress-value {
 }
 
 .plain-auth-header h1 {
-  margin: 0 0 8px;
+  margin: 0 0 18px;
   color: #111827;
   font-size: clamp(1.75rem, 4vw, 2.35rem);
-  font-variant: small-caps;
+  font-variant: normal;
   line-height: 1.05;
-  text-transform: lowercase;
+  text-transform: none;
 }
 
 .auth-language-select {
