@@ -1491,7 +1491,7 @@ function MarketplacePage({
             <section className="dashboard-grid" id="browse-products" aria-label="Product listings">
               {paginatedProducts.map((product) => (
                 <ProductCard
-                  canDelete={activeView === 'listings' && isOwnListing(product)}
+                  canDelete={isOwnListing(product)}
                   isFavorite={favoriteIds.includes(product.id)}
                   key={product.id}
                   product={product}
