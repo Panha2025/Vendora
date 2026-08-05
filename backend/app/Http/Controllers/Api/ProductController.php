@@ -159,24 +159,27 @@ class ProductController extends Controller
 
     private function hasCloudinaryConfig(): bool
     {
-        return filled($this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME'))
-            && filled($this->cloudinaryEnv('CLOUDINARY_API_KEY'))
-            && filled($this->cloudinaryEnv('CLOUDINARY_API_SECRET'));
+        $credentials = $this->cloudinaryCredentials();
+
+        return filled($credentials['cloud_name'])
+            && filled($credentials['api_key'])
+            && filled($credentials['api_secret']);
     }
 
     private function storeCloudinaryImage($image): string
     {
+        $credentials = $this->cloudinaryCredentials();
         $timestamp = time();
         $folder = $this->cloudinaryEnv('CLOUDINARY_FOLDER', 'vendora/products');
-        $apiSecret = $this->cloudinaryEnv('CLOUDINARY_API_SECRET');
+        $apiSecret = $credentials['api_secret'];
         $signature = sha1("folder={$folder}&timestamp={$timestamp}{$apiSecret}");
 
         $response = Http::attach(
             'file',
             fopen($image->getRealPath(), 'r'),
             Str::uuid().'.'.$image->getClientOriginalExtension()
-        )->post('https://api.cloudinary.com/v1_1/'.$this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME').'/image/upload', [
-            'api_key' => $this->cloudinaryEnv('CLOUDINARY_API_KEY'),
+        )->post('https://api.cloudinary.com/v1_1/'.$credentials['cloud_name'].'/image/upload', [
+            'api_key' => $credentials['api_key'],
             'folder' => $folder,
             'timestamp' => $timestamp,
             'signature' => $signature,
@@ -199,6 +202,29 @@ class ProductController extends Controller
         $value = env($key, $default);
 
         return is_string($value) ? trim($value) : $value;
+    }
+
+    private function cloudinaryCredentials(): array
+    {
+        $cloudinaryUrl = $this->cloudinaryEnv('CLOUDINARY_URL');
+
+        if ($cloudinaryUrl) {
+            $parts = parse_url($cloudinaryUrl);
+
+            if ($parts && isset($parts['host'], $parts['user'], $parts['pass'])) {
+                return [
+                    'cloud_name' => trim($parts['host']),
+                    'api_key' => trim($parts['user']),
+                    'api_secret' => trim($parts['pass']),
+                ];
+            }
+        }
+
+        return [
+            'cloud_name' => $this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME'),
+            'api_key' => $this->cloudinaryEnv('CLOUDINARY_API_KEY'),
+            'api_secret' => $this->cloudinaryEnv('CLOUDINARY_API_SECRET'),
+        ];
     }
 
     private function withPublicImageUrls(Product $product): Product
