@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProductCard from '../components/ProductCard'
 
 function ProductDetailView({
   canEdit,
   isFavorite,
   onBack,
+  onDelete,
   onEdit,
   onMessage,
   onShowDetail,
@@ -13,8 +14,14 @@ function ProductDetailView({
   relatedProducts,
   t,
 }) {
-  const gallery = product.images?.length ? product.images : [product.image]
+  const gallery = product.images?.filter(Boolean).length
+    ? product.images.filter(Boolean)
+    : []
   const [activeImage, setActiveImage] = useState(gallery[0])
+
+  useEffect(() => {
+    setActiveImage(gallery[0])
+  }, [gallery[0], product.id])
 
   return (
     <main className="product-detail-page">
@@ -36,13 +43,17 @@ function ProductDetailView({
         <div className="detail-gallery">
           <div className="detail-main-image">
             {product.featured && <span className="featured-badge">Featured</span>}
-            <img
-              src={activeImage}
-              alt={product.title}
-              decoding="async"
-              fetchPriority="high"
-              loading="eager"
-            />
+            {activeImage ? (
+              <img
+                src={activeImage}
+                alt={product.title}
+                decoding="async"
+                fetchPriority="high"
+                loading="eager"
+              />
+            ) : (
+              <span className="product-image-empty detail-empty-image">No image</span>
+            )}
             <button
               aria-label={isFavorite ? t('removeFromWishlist') : t('addToWishlist')}
               className={`favorite-button detail-favorite ${isFavorite ? 'active' : ''}`}
@@ -155,9 +166,18 @@ function ProductDetailView({
             {t('messageSeller')}
           </button>
           {canEdit && (
-            <button type="button" onClick={() => onEdit(product)}>
-              {t('editListing')}
-            </button>
+            <>
+              <button type="button" onClick={() => onEdit(product)}>
+                {t('editListing')}
+              </button>
+              <button
+                className="danger-action"
+                type="button"
+                onClick={() => onDelete(product)}
+              >
+                Delete Listing
+              </button>
+            </>
           )}
           <button type="button" onClick={() => onToggleFavorite(product.id)}>
             {isFavorite ? t('removeFromWishlist') : t('addToWishlist')}

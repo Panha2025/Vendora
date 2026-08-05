@@ -1130,6 +1130,7 @@ function MarketplacePage({
               && item.category === selectedProduct.category,
           )}
           onBack={goBackToDashboard}
+          onDelete={handleDeleteListing}
           onEdit={handleEditListing}
           onMessage={handleMessage}
           onShowDetail={openProductDetail}

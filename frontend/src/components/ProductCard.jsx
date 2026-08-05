@@ -23,12 +23,16 @@ function ProductCard({
         type="button"
         onClick={() => onShowDetail(product)}
       >
-        <img
-          src={product.image}
-          alt={product.title}
-          decoding="async"
-          loading="eager"
-        />
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.title}
+            decoding="async"
+            loading="eager"
+          />
+        ) : (
+          <span className="product-image-empty">No image</span>
+        )}
       </button>
       <div className="favorite-button-wrap">
         <button
