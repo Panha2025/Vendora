@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -158,31 +159,46 @@ class ProductController extends Controller
 
     private function hasCloudinaryConfig(): bool
     {
-        return filled(env('CLOUDINARY_CLOUD_NAME'))
-            && filled(env('CLOUDINARY_API_KEY'))
-            && filled(env('CLOUDINARY_API_SECRET'));
+        return filled($this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME'))
+            && filled($this->cloudinaryEnv('CLOUDINARY_API_KEY'))
+            && filled($this->cloudinaryEnv('CLOUDINARY_API_SECRET'));
     }
 
     private function storeCloudinaryImage($image): string
     {
         $timestamp = time();
-        $folder = env('CLOUDINARY_FOLDER', 'vendora/products');
-        $signature = sha1("folder={$folder}&timestamp={$timestamp}".env('CLOUDINARY_API_SECRET'));
+        $folder = $this->cloudinaryEnv('CLOUDINARY_FOLDER', 'vendora/products');
+        $apiSecret = $this->cloudinaryEnv('CLOUDINARY_API_SECRET');
+        $signature = sha1("folder={$folder}&timestamp={$timestamp}{$apiSecret}");
 
         $response = Http::attach(
             'file',
             fopen($image->getRealPath(), 'r'),
             Str::uuid().'.'.$image->getClientOriginalExtension()
-        )->post('https://api.cloudinary.com/v1_1/'.env('CLOUDINARY_CLOUD_NAME').'/image/upload', [
-            'api_key' => env('CLOUDINARY_API_KEY'),
+        )->post('https://api.cloudinary.com/v1_1/'.$this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME').'/image/upload', [
+            'api_key' => $this->cloudinaryEnv('CLOUDINARY_API_KEY'),
             'folder' => $folder,
             'timestamp' => $timestamp,
             'signature' => $signature,
         ]);
 
-        abort_unless($response->successful(), 502, 'Could not upload product image.');
+        if (! $response->successful()) {
+            Log::warning('Cloudinary product image upload failed.', [
+                'status' => $response->status(),
+                'body' => $response->json() ?: $response->body(),
+            ]);
+
+            abort(502, $response->json('error.message') ?: 'Could not upload product image.');
+        }
 
         return $response->json('secure_url');
+    }
+
+    private function cloudinaryEnv(string $key, ?string $default = null): ?string
+    {
+        $value = env($key, $default);
+
+        return is_string($value) ? trim($value) : $value;
     }
 
     private function withPublicImageUrls(Product $product): Product
