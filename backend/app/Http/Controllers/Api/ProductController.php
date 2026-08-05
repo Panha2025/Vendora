@@ -199,7 +199,15 @@ class ProductController extends Controller
 
     private function productImageUrl(Product $product, int $index): string
     {
-        return rtrim(request()->getSchemeAndHttpHost(), '/')."/api/products/{$product->id}/images/{$index}";
+        $request = request();
+        $scheme = $request->headers->get('x-forwarded-proto', $request->getScheme());
+        $host = $request->getHost();
+
+        if (str_ends_with($host, '.onrender.com')) {
+            $scheme = 'https';
+        }
+
+        return "{$scheme}://{$host}/api/products/{$product->id}/images/{$index}";
     }
 
     private function localStoragePath(string $imageUrl): ?string
