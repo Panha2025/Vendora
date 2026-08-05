@@ -7,6 +7,15 @@ import {
 } from '../api/auth'
 import ProfileCropper from '../components/ProfileCropper'
 
+function CameraIcon() {
+  return (
+    <svg className="avatar-camera-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M8.8 6.5 10.2 5h3.6l1.4 1.5H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8.5a2 2 0 0 1 2-2h2.8Z" />
+      <circle cx="12" cy="12.6" r="3.1" fill="#5f666d" />
+    </svg>
+  )
+}
+
 function AuthPage({
   initialMode = 'login',
   language,
@@ -260,11 +269,11 @@ function AuthPage({
             <label className="avatar-upload-field">
               <span>Profile picture</span>
               <div className="avatar-upload-row">
-                <div className="avatar-preview-circle">
+                <div className={`avatar-preview-circle ${avatarPreview ? '' : 'avatar-empty-placeholder'}`}>
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Profile preview" />
                   ) : (
-                    <span>+</span>
+                    <CameraIcon />
                   )}
                 </div>
                 <input

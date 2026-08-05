@@ -115,6 +115,10 @@ const appIconPaths = {
     <path key="1" d="M20 21a8 8 0 0 0-16 0" />,
     <circle key="2" cx="12" cy="8" r="4" />,
   ],
+  camera: [
+    <path key="1" d="M8.8 6.5 10.2 5h3.6l1.4 1.5H18a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8.5a2 2 0 0 1 2-2h2.8Z" />,
+    <circle key="2" cx="12" cy="12.6" r="3.1" />,
+  ],
   favorite: [
     <path key="1" d="M20.8 5.6a5.2 5.2 0 0 0-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 0 0-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z" />,
   ],
@@ -283,12 +287,18 @@ function AccountSettingsSection({ onUserUpdate, user }) {
       <form className="settings-form" onSubmit={handleSubmit}>
         <label className="settings-avatar-field">
           <span>Profile picture</span>
-          <div className="avatar-preview-circle">
-            {avatarPreview ? (
-              <img src={avatarPreview} alt="Profile preview" />
-            ) : (
-              <span>+</span>
-            )}
+          <div className="settings-avatar-upload-control">
+            <div className={`avatar-preview-circle settings-avatar-preview ${avatarPreview ? '' : 'avatar-empty-placeholder'}`}>
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Profile preview" />
+              ) : (
+                <AppIcon name="camera" />
+              )}
+            </div>
+            <div>
+              <strong>Upload profile photo</strong>
+              <small>Use a clear square photo. You can crop it before saving.</small>
+            </div>
           </div>
           <input
             accept="image/png,image/jpeg,image/jpg,image/webp"
