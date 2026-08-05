@@ -276,6 +276,10 @@ function AuthPage({
                     <CameraIcon />
                   )}
                 </div>
+                <div className="avatar-upload-copy">
+                  <strong>{form.avatar ? 'Profile photo selected' : 'Upload profile photo'}</strong>
+                  <small>{form.avatar?.name || 'JPG, PNG, or WebP. You can crop it after choosing.'}</small>
+                </div>
                 <input
                   id="profile-picture"
                   accept="image/png,image/jpeg,image/jpg,image/webp"
@@ -285,9 +289,6 @@ function AuthPage({
                   required
                 />
               </div>
-              <span className="avatar-upload-name">
-                {form.avatar?.name || 'Choose a clear profile photo'}
-              </span>
             </label>
 
             <label>
