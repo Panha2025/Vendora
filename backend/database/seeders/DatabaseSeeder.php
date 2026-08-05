@@ -18,12 +18,21 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $demoEmail = env('DEMO_ACCOUNT_EMAIL');
+        $demoPassword = env('DEMO_ACCOUNT_PASSWORD');
+
+        if (! $demoEmail || ! $demoPassword) {
+            return;
+        }
+
         User::updateOrCreate(
-            ['email' => 'idk@gmail.com'],
+            ['email' => $demoEmail],
             [
-                'name' => 'Test User',
-                'password' => Hash::make('12345678'),
+                'name' => env('DEMO_ACCOUNT_NAME', 'Demo User'),
+                'phone' => env('DEMO_ACCOUNT_PHONE', '0000000000'),
+                'password' => Hash::make($demoPassword),
                 'role' => 'buyer',
+                'email_verified_at' => now(),
             ],
         );
     }
