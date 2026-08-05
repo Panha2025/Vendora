@@ -184,9 +184,9 @@ function AdminPage({ language, onLanguageChange, onLogout, t, user }) {
               value={language}
               onChange={(event) => onLanguageChange(event.target.value)}
             >
-              <option value="en">English</option>
-              <option value="km">ខ្មែរ</option>
-              <option value="zh">中文</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="km">🇰🇭 Khmer</option>
+              <option value="zh">🇨🇳 中文</option>
             </select>
           </label>
           <span>{user?.name || 'Admin'}</span>
