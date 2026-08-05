@@ -162,9 +162,11 @@ function ProductDetailView({
                 )}
               </div>
             )}
-          <button type="button" onClick={() => onMessage(product)}>
-            {t('messageSeller')}
-          </button>
+          {!canEdit && (
+            <button type="button" onClick={() => onMessage(product)}>
+              {t('messageSeller')}
+            </button>
+          )}
           {canEdit && (
             <>
               <button type="button" onClick={() => onEdit(product)}>
