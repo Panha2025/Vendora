@@ -10,6 +10,7 @@ import {
 import { deleteProduct, formatRelativeTime, getProducts } from '../api/products'
 import vendoraLogo from '../assets/Vendora_img.png'
 import ProductCard from '../components/ProductCard'
+import ProfileCropper from '../components/ProfileCropper'
 import { categories, conditions, products } from '../data/products'
 import MessagesView from '../sections/MessagesView'
 import ProductDetailView from '../sections/ProductDetailView'
@@ -143,6 +144,11 @@ const appIconPaths = {
     <circle key="1" cx="12" cy="12" r="3" />,
     <path key="2" d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 0 1 7.1 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 0 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 0 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z" />,
   ],
+  logout: [
+    <path key="1" d="M10 17l5-5-5-5" />,
+    <path key="2" d="M15 12H3" />,
+    <path key="3" d="M21 4v16" />,
+  ],
   theme: [
     <path key="1" d="M12 3a7 7 0 1 0 7 7 5 5 0 0 1-7-7Z" />,
   ],
@@ -193,6 +199,7 @@ function AccountSettingsSection({ onUserUpdate, user }) {
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '')
   const [message, setMessage] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [avatarCropTarget, setAvatarCropTarget] = useState(null)
 
   function updateField(event) {
     setForm((current) => ({
@@ -204,8 +211,45 @@ function AccountSettingsSection({ onUserUpdate, user }) {
   function updateAvatar(event) {
     const file = event.target.files?.[0] || null
 
+    if (!file) {
+      return
+    }
+
+    setAvatarCropTarget({
+      file,
+      preview: URL.createObjectURL(file),
+    })
+    event.target.value = ''
+  }
+
+  function saveAvatarCrop(file) {
+    const preview = URL.createObjectURL(file)
+
     setForm((current) => ({ ...current, avatar: file }))
-    setAvatarPreview(file ? URL.createObjectURL(file) : user?.avatar || '')
+    setAvatarPreview((currentPreview) => {
+      if (currentPreview && currentPreview !== user?.avatar) {
+        URL.revokeObjectURL(currentPreview)
+      }
+
+      return preview
+    })
+    setAvatarCropTarget((current) => {
+      if (current?.preview) {
+        URL.revokeObjectURL(current.preview)
+      }
+
+      return null
+    })
+  }
+
+  function cancelAvatarCrop() {
+    setAvatarCropTarget((current) => {
+      if (current?.preview) {
+        URL.revokeObjectURL(current.preview)
+      }
+
+      return null
+    })
   }
 
   async function handleSubmit(event) {
@@ -274,6 +318,15 @@ function AccountSettingsSection({ onUserUpdate, user }) {
           {isSaving ? 'Saving...' : 'Save changes'}
         </button>
       </form>
+
+      {avatarCropTarget && (
+        <ProfileCropper
+          fileName={avatarCropTarget.file.name}
+          source={avatarCropTarget.preview}
+          onCancel={cancelAvatarCrop}
+          onSave={saveAvatarCrop}
+        />
+      )}
     </section>
   )
 }
@@ -1196,11 +1249,13 @@ function MarketplacePage({
                 </button>
                 {isAccountMenuOpen && (
                   <div className="account-menu-panel">
-                    <button type="button" onClick={() => showDashboardView('settings')}>
+                    <button className="account-menu-settings" type="button" onClick={() => showDashboardView('settings')}>
+                      <AppIcon name="settings" />
                       Settings
                     </button>
-                    <button type="button" onClick={onLogout}>
-                      {t('logout')}?
+                    <button className="account-menu-logout" type="button" onClick={onLogout}>
+                      <AppIcon name="logout" />
+                      {t('logout')}
                     </button>
                   </div>
                 )}

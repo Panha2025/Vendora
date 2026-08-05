@@ -5,6 +5,7 @@ import {
   registerUser,
   socialLoginUser,
 } from '../api/auth'
+import ProfileCropper from '../components/ProfileCropper'
 
 function AuthPage({
   initialMode = 'login',
@@ -29,6 +30,7 @@ function AuthPage({
   const [isLoading, setIsLoading] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState('')
   const [socialProviders, setSocialProviders] = useState(null)
+  const [avatarCropTarget, setAvatarCropTarget] = useState(null)
 
   const isRegistering = mode === 'register'
   const selectedProviderKey = selectedProvider.toLowerCase()
@@ -65,17 +67,47 @@ function AuthPage({
   function updateAvatar(event) {
     const file = event.target.files?.[0] || null
 
+    if (!file) {
+      return
+    }
+
+    setAvatarCropTarget({
+      file,
+      preview: URL.createObjectURL(file),
+    })
+    event.target.value = ''
+  }
+
+  function saveAvatarCrop(file) {
+    const preview = URL.createObjectURL(file)
+
     setForm((current) => ({
       ...current,
       avatar: file,
     }))
-
     setAvatarPreview((currentPreview) => {
       if (currentPreview) {
         URL.revokeObjectURL(currentPreview)
       }
 
-      return file ? URL.createObjectURL(file) : ''
+      return preview
+    })
+    setAvatarCropTarget((current) => {
+      if (current?.preview) {
+        URL.revokeObjectURL(current.preview)
+      }
+
+      return null
+    })
+  }
+
+  function cancelAvatarCrop() {
+    setAvatarCropTarget((current) => {
+      if (current?.preview) {
+        URL.revokeObjectURL(current.preview)
+      }
+
+      return null
     })
   }
 
@@ -472,6 +504,15 @@ function AuthPage({
               </div>
             </section>
           </div>
+        )}
+
+        {avatarCropTarget && (
+          <ProfileCropper
+            fileName={avatarCropTarget.file.name}
+            source={avatarCropTarget.preview}
+            onCancel={cancelAvatarCrop}
+            onSave={saveAvatarCrop}
+          />
         )}
       </form>
     </main>

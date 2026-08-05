@@ -1061,6 +1061,20 @@ progress::-webkit-progress-value {
   box-shadow: 0 18px 56px rgba(0, 0, 0, 0.34);
 }
 
+.profile-crop-card {
+  width: min(94vw, 620px);
+}
+
+.profile-crop-stage {
+  min-height: min(54vh, 430px);
+}
+
+.profile-crop-window {
+  width: min(78vw, 340px);
+  border-radius: 999px;
+  aspect-ratio: 1;
+}
+
 .crop-preview-image {
   width: 100%;
   height: 100%;
@@ -2518,11 +2532,25 @@ progress::-webkit-progress-value {
 
 .account-menu-panel button {
   width: 100%;
-  justify-content: center;
-  color: #b91c1c;
+  justify-content: flex-start;
+  gap: 8px;
+  color: #334155;
 }
 
 .account-menu-panel button:hover {
+  background: #f1f5f9;
+}
+
+.account-menu-panel .app-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.account-menu-panel .account-menu-logout {
+  color: #b91c1c;
+}
+
+.account-menu-panel .account-menu-logout:hover {
   background: #fef2f2;
 }
 
