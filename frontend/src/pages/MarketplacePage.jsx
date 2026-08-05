@@ -160,6 +160,25 @@ function AppIcon({ name }) {
   )
 }
 
+function UserAvatar({ user, label = user?.name || 'User' }) {
+  const initials = String(label)
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'U'
+
+  return (
+    <span className="user-avatar-circle" aria-hidden="true">
+      {user?.avatar ? (
+        <img src={user.avatar} alt="" decoding="async" loading="lazy" />
+      ) : (
+        initials
+      )}
+    </span>
+  )
+}
+
 function getCachedListings(cacheKey = LISTING_CACHE_KEY) {
   const cachedListings = localStorage.getItem(cacheKey)
 
@@ -1040,7 +1059,7 @@ function MarketplacePage({
                   type="button"
                   onClick={() => setIsAccountMenuOpen((open) => !open)}
                 >
-                  <AppIcon name="account" />
+                  <UserAvatar user={user} />
                   {user?.name || 'John Doe'}
                 </button>
                 {isAccountMenuOpen && (

@@ -19,9 +19,11 @@ function AuthPage({
     name: '',
     phone: '',
     email: '',
+    avatar: null,
     password: '',
     password_confirmation: '',
   })
+  const [avatarPreview, setAvatarPreview] = useState('')
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('info')
   const [isLoading, setIsLoading] = useState(false)
@@ -59,6 +61,29 @@ function AuthPage({
       [event.target.name]: event.target.value,
     }))
   }
+
+  function updateAvatar(event) {
+    const file = event.target.files?.[0] || null
+
+    setForm((current) => ({
+      ...current,
+      avatar: file,
+    }))
+
+    setAvatarPreview((currentPreview) => {
+      if (currentPreview) {
+        URL.revokeObjectURL(currentPreview)
+      }
+
+      return file ? URL.createObjectURL(file) : ''
+    })
+  }
+
+  useEffect(() => () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -135,6 +160,10 @@ function AuthPage({
       return 'Please enter your phone number.'
     }
 
+    if (isRegistering && !form.avatar) {
+      return 'Please upload a profile picture.'
+    }
+
     if (!email) {
       return 'Please enter your email address.'
     }
@@ -195,6 +224,26 @@ function AuthPage({
 
         {isRegistering && (
           <>
+            <label className="avatar-upload-field">
+              <span>Profile picture</span>
+              <div className="avatar-upload-row">
+                <div className="avatar-preview-circle">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Profile preview" />
+                  ) : (
+                    <span>+</span>
+                  )}
+                </div>
+                <input
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  name="avatar"
+                  type="file"
+                  onChange={updateAvatar}
+                  required
+                />
+              </div>
+            </label>
+
             <label>
               <span>{t('fullName')}</span>
               <input

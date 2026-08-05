@@ -44,15 +44,18 @@ function consumeOAuthRedirectSession() {
 
 async function sendAuthRequest(endpoint, payload) {
   let response
+  const isFormData = payload instanceof FormData
 
   try {
     response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: isFormData
+        ? { Accept: 'application/json' }
+        : {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+      body: isFormData ? payload : JSON.stringify(payload),
     })
   } catch {
     if (isGitHubPagesDemo()) {
@@ -118,7 +121,15 @@ export async function loginUser(payload) {
 }
 
 export async function registerUser(payload) {
-  const session = await sendAuthRequest('/register', payload)
+  const formData = new FormData()
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      formData.append(key, value)
+    }
+  })
+
+  const session = await sendAuthRequest('/register', formData)
   saveSession(session)
   return session
 }

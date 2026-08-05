@@ -63,6 +63,7 @@ export function mapApiProduct(product) {
     location: product.location,
     price: Number(product.price),
     seller,
+    sellerAvatar: product.seller?.avatar,
     sellerId: product.user_id,
     sellerSince: 'Marketplace seller',
     sellerRating: 'New seller',

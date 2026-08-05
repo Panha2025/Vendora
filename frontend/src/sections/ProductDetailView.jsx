@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react'
 import ProductCard from '../components/ProductCard'
 
+function ProfileAvatar({ image, name }) {
+  const initials = String(name || 'Seller')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'S'
+
+  return (
+    <span className="seller-avatar-circle" aria-hidden="true">
+      {image ? (
+        <img src={image} alt="" decoding="async" loading="lazy" />
+      ) : (
+        initials
+      )}
+    </span>
+  )
+}
+
 function ProductDetailView({
   canEdit,
   isFavorite,
@@ -136,12 +155,7 @@ function ProductDetailView({
           <section className="seller-card">
             <h2>{t('sellerInformation')}</h2>
             <div className="seller-profile">
-              <img
-                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80"
-                alt={product.seller}
-                decoding="async"
-                loading="lazy"
-              />
+              <ProfileAvatar image={product.sellerAvatar} name={product.seller} />
               <div>
                 <strong>{product.seller}</strong>
                 <span>{product.sellerSince}</span>

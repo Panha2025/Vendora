@@ -1509,7 +1509,9 @@ progress::-webkit-progress-value {
 }
 
 .plain-auth-card input[type='email'],
+.plain-auth-card input[type='file'],
 .plain-auth-card input[type='password'],
+.plain-auth-card input[type='tel'],
 .plain-auth-card input[type='text'] {
   min-height: 56px;
   padding: 0 18px;
@@ -1518,6 +1520,57 @@ progress::-webkit-progress-value {
   border-radius: 8px;
   background: #fff;
   font-weight: 600;
+}
+
+.avatar-upload-field {
+  display: grid;
+  gap: 10px;
+}
+
+.avatar-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar-preview-circle,
+.user-avatar-circle,
+.seller-avatar-circle {
+  display: grid;
+  flex: 0 0 auto;
+  overflow: hidden;
+  place-items: center;
+  color: #0969f6;
+  border: 1px solid #d6e5ff;
+  border-radius: 999px;
+  background: #eef6ff;
+  font-weight: 900;
+}
+
+.avatar-preview-circle {
+  width: 76px;
+  height: 76px;
+  font-size: 1.7rem;
+}
+
+.user-avatar-circle {
+  width: 28px;
+  height: 28px;
+  font-size: 0.72rem;
+}
+
+.seller-avatar-circle {
+  width: 56px;
+  height: 56px;
+  font-size: 1rem;
+}
+
+.avatar-preview-circle img,
+.user-avatar-circle img,
+.seller-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .plain-auth-card input::placeholder {

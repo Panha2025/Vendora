@@ -9,6 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
@@ -35,6 +37,7 @@ class AuthController extends Controller
             'phone' => ['required', 'string', 'max:40'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:8'],
+            'avatar' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
         ]);
 
         $validated['name'] = trim($validated['name']);
@@ -56,6 +59,7 @@ class AuthController extends Controller
             'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
             'role' => 'buyer',
+            'avatar' => $this->storeAvatar($request->file('avatar')),
         ]);
 
         return response()->json([
@@ -334,5 +338,87 @@ class AuthController extends Controller
             'provider_id' => $providerId,
             'avatar' => $avatar,
         ]);
+    }
+
+    private function storeAvatar($image): string
+    {
+        if (env('PRODUCT_IMAGE_STORAGE') === 'cloudinary' && $this->hasCloudinaryConfig()) {
+            return $this->storeCloudinaryAvatar($image);
+        }
+
+        $path = $image->storePublicly('avatars', [
+            'disk' => env('PRODUCT_IMAGE_DISK', 'public'),
+        ]);
+
+        return Storage::disk(env('PRODUCT_IMAGE_DISK', 'public'))->url($path);
+    }
+
+    private function storeCloudinaryAvatar($image): string
+    {
+        $credentials = $this->cloudinaryCredentials();
+        $timestamp = time();
+        $folder = $this->cloudinaryEnv('CLOUDINARY_AVATAR_FOLDER', 'vendora/avatars');
+        $signature = sha1("folder={$folder}&timestamp={$timestamp}{$credentials['api_secret']}");
+
+        $response = Http::attach(
+            'file',
+            fopen($image->getRealPath(), 'r'),
+            Str::uuid().'.'.$image->getClientOriginalExtension()
+        )->post('https://api.cloudinary.com/v1_1/'.$credentials['cloud_name'].'/image/upload', [
+            'api_key' => $credentials['api_key'],
+            'folder' => $folder,
+            'timestamp' => $timestamp,
+            'signature' => $signature,
+        ]);
+
+        if (! $response->successful()) {
+            Log::warning('Cloudinary avatar upload failed.', [
+                'status' => $response->status(),
+                'body' => $response->json() ?: $response->body(),
+            ]);
+
+            abort(502, $response->json('error.message') ?: 'Could not upload profile picture.');
+        }
+
+        return $response->json('secure_url');
+    }
+
+    private function hasCloudinaryConfig(): bool
+    {
+        $credentials = $this->cloudinaryCredentials();
+
+        return filled($credentials['cloud_name'])
+            && filled($credentials['api_key'])
+            && filled($credentials['api_secret']);
+    }
+
+    private function cloudinaryEnv(string $key, ?string $default = null): ?string
+    {
+        $value = env($key, $default);
+
+        return is_string($value) ? trim($value) : $value;
+    }
+
+    private function cloudinaryCredentials(): array
+    {
+        $cloudinaryUrl = $this->cloudinaryEnv('CLOUDINARY_URL');
+
+        if ($cloudinaryUrl) {
+            $parts = parse_url($cloudinaryUrl);
+
+            if ($parts && isset($parts['host'], $parts['user'], $parts['pass'])) {
+                return [
+                    'cloud_name' => trim($parts['host']),
+                    'api_key' => trim($parts['user']),
+                    'api_secret' => trim($parts['pass']),
+                ];
+            }
+        }
+
+        return [
+            'cloud_name' => $this->cloudinaryEnv('CLOUDINARY_CLOUD_NAME'),
+            'api_key' => $this->cloudinaryEnv('CLOUDINARY_API_KEY'),
+            'api_secret' => $this->cloudinaryEnv('CLOUDINARY_API_SECRET'),
+        ];
     }
 }
