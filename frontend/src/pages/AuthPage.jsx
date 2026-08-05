@@ -235,6 +235,7 @@ function AuthPage({
                   )}
                 </div>
                 <input
+                  id="profile-picture"
                   accept="image/png,image/jpeg,image/jpg,image/webp"
                   name="avatar"
                   type="file"
@@ -242,6 +243,9 @@ function AuthPage({
                   required
                 />
               </div>
+              <span className="avatar-upload-name">
+                {form.avatar?.name || 'Choose a clear profile photo'}
+              </span>
             </label>
 
             <label>

@@ -1524,13 +1524,25 @@ progress::-webkit-progress-value {
 
 .avatar-upload-field {
   display: grid;
-  gap: 10px;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
 }
 
 .avatar-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.avatar-upload-row input[type='file'] {
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .avatar-preview-circle,
@@ -1548,9 +1560,31 @@ progress::-webkit-progress-value {
 }
 
 .avatar-preview-circle {
-  width: 76px;
-  height: 76px;
-  font-size: 1.7rem;
+  width: 96px;
+  height: 96px;
+  cursor: pointer;
+  font-size: 2rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.avatar-upload-field:hover .avatar-preview-circle {
+  border-color: #0969f6;
+  box-shadow: 0 12px 30px rgba(9, 105, 246, 0.16);
+  transform: translateY(-1px);
+}
+
+.avatar-upload-field:focus-within .avatar-preview-circle {
+  border-color: #0969f6;
+  outline: 3px solid rgba(9, 105, 246, 0.16);
+}
+
+.avatar-upload-name {
+  color: #64748b;
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
 .user-avatar-circle {
