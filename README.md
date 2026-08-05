@@ -125,16 +125,48 @@ backend/database/migrations/ - Database table structure files
 
 ## Deployment Note
 
-The React frontend can be hosted on Vercel. Use these settings:
+The live deployment uses Vercel for the React frontend and Render for the Laravel API.
+
+### Vercel Frontend
+
+Use this environment variable:
 
 ```text
-Root Directory: frontend
-Build Command: npm run build
-Output Directory: dist
-Environment Variable: VITE_API_URL=https://your-backend-domain.com/api
+VITE_API_URL=https://your-render-backend-domain.onrender.com/api
 ```
 
-For a real online marketplace where all users can register, upload products, send messages, and see shared data, the Laravel backend, MySQL database, and image storage must also be deployed to a server.
+The root `vercel.json` already points Vercel to the `frontend` app.
+
+### Render Backend
+
+Use Docker with:
+
+```text
+Root Directory: backend
+Dockerfile Path: ./Dockerfile
+Docker Build Context Directory: .
+Docker Command: leave empty
+```
+
+The backend exposes a health check at:
+
+```text
+https://your-render-backend-domain.onrender.com/api/health
+```
+
+### Persistent Image Uploads
+
+Render's normal filesystem is not reliable for long-term user uploads. For real users, set up Cloudinary and add these backend environment variables in Render:
+
+```env
+PRODUCT_IMAGE_STORAGE=cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_FOLDER=vendora/products
+```
+
+Without Cloudinary, uploads can work temporarily, but images may disappear after redeploys or service changes.
 
 ## Social Login Setup
 
@@ -160,6 +192,25 @@ APPLE_REDIRECT_URI="${APP_URL}/api/auth/apple/callback"
 ```
 
 The frontend checks `/api/auth/providers` and only enables social login buttons when the matching backend credentials are configured.
+
+For production Google login, add the Google callback URL in Google Cloud Console:
+
+```text
+https://your-render-backend-domain.onrender.com/api/auth/google/callback
+```
+
+Then add the Google client ID and secret to Render.
+
+## Startup Readiness Checklist
+
+- Frontend hosted on Vercel
+- Backend API hosted on Render
+- Production PostgreSQL database connected
+- Persistent image storage configured with Cloudinary
+- Google OAuth credentials added in Render and Google Cloud Console
+- Email provider configured for real password reset and verification emails
+- Custom domain connected to Vercel
+- Monitoring pointed at `/api/health`
 
 ## Conclusion
 
