@@ -1221,9 +1221,9 @@ function MarketplacePage({
               value={language}
               onChange={(event) => onLanguageChange(event.target.value)}
             >
-              <option value="en">🇺🇸 English</option>
-              <option value="km">🇰🇭 Khmer</option>
-              <option value="zh">🇨🇳 中文</option>
+              <option value="en">&#x1F1FA;&#x1F1F8; English</option>
+              <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
+              <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
             </select>
           </label>
           <button
@@ -1326,9 +1326,9 @@ function MarketplacePage({
                         value={language}
                         onChange={(event) => onLanguageChange(event.target.value)}
                       >
-                        <option value="en">🇺🇸 English</option>
-                        <option value="km">🇰🇭 Khmer</option>
-                        <option value="zh">🇨🇳 中文</option>
+                        <option value="en">&#x1F1FA;&#x1F1F8; English</option>
+                        <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
+                        <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
                       </select>
                     </label>
                     <button type="button" onClick={onLogout}>
