@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: vendora
+    runtime: docker
+    repo: https://github.com/Panha2025/Vendora
+    branch: main
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health

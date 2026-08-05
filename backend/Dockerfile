@@ -15,6 +15,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY . .
 
 RUN composer dump-autoload --optimize \
+    && chmod +x start-render.sh \
     && chmod -R 775 storage bootstrap/cache
 
-CMD ["sh", "-c", "php artisan optimize:clear && php artisan storage:link || true && php artisan migrate --force && php artisan db:seed --force && php -S 0.0.0.0:${PORT:-8000} -t public public/index.php"]
+CMD ["./start-render.sh"]
