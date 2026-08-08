@@ -2240,6 +2240,42 @@ progress::-webkit-progress-value {
   background: #eaf2ff;
 }
 
+.mobile-categories-toggle span {
+  margin-left: auto;
+  color: #0969f6;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.mobile-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px 0 2px;
+}
+
+.mobile-category-grid button {
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid #e3eaf4;
+  background: #f8fbff;
+  font-size: 0.76rem;
+  line-height: 1.15;
+}
+
+.mobile-category-grid .category-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.mobile-category-grid button.active {
+  color: #0969f6;
+  border-color: #b8d4ff;
+  background: #eaf2ff;
+}
+
 .dashboard-actions button,
 .side-menu button,
 .sidebar-block button,
@@ -5358,7 +5394,7 @@ progress::-webkit-progress-value {
 
   .mobile-menu-panel {
     right: -2px;
-    width: min(240px, calc(100vw - 28px));
+    width: min(340px, calc(100vw - 28px));
   }
 
   .category-menu-panel {

@@ -1388,13 +1388,46 @@ function MarketplacePage({
                       <AppIcon name="post" />
                       {t('postItem')}
                     </button>
-                    <LanguageSelect
-                      label={t('language')}
-                      language={language}
-                      onLanguageChange={onLanguageChange}
-                    />
                   </>
                 )}
+                {activeView !== 'messages' && activeView !== 'settings' && (
+                  <>
+                    <button
+                      aria-expanded={isMobileOptionsOpen}
+                      className="mobile-categories-toggle"
+                      type="button"
+                      onClick={() => setIsMobileOptionsOpen((open) => !open)}
+                    >
+                      <CategoryIcon category="All" />
+                      {t('categories')}
+                      <span>{isMobileOptionsOpen ? '-' : '+'}</span>
+                    </button>
+                    {isMobileOptionsOpen && (
+                      <div className="mobile-category-grid">
+                        {sidebarCategories.map((item) => (
+                          <button
+                            className={`category-filter-button ${category === item ? 'active' : ''}`}
+                            key={item}
+                            type="button"
+                            onClick={() => {
+                              updateCategory(item)
+                              setIsMobileOptionsOpen(false)
+                              setIsTopMenuOpen(false)
+                            }}
+                          >
+                            <CategoryIcon category={item} />
+                            {translateCategory(t, item)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                <LanguageSelect
+                  label={t('language')}
+                  language={language}
+                  onLanguageChange={onLanguageChange}
+                />
               </div>
             )}
           </div>
@@ -1614,163 +1647,6 @@ function MarketplacePage({
                   </div>
                 </div>
               </div>
-            </section>
-          )}
-
-          {activeView !== 'messages' && activeView !== 'settings' && (
-            <section className="mobile-browse-options" aria-label="Mobile browse options">
-              <button
-                aria-expanded={isMobileOptionsOpen}
-                className="mobile-options-toggle"
-                type="button"
-                onClick={() => setIsMobileOptionsOpen((open) => !open)}
-              >
-                {t('options')}
-                <span>{isMobileOptionsOpen ? '-' : '+'}</span>
-              </button>
-
-              {isMobileOptionsOpen && (
-                <div className="mobile-options-panel">
-                  <nav className="side-menu" aria-label="Mobile dashboard menu">
-                    <button
-                      className={activeView === 'home' ? 'active' : ''}
-                      type="button"
-                      onClick={() => showDashboardView('home')}
-                    >
-                      <AppIcon name="home" />
-                      {t('home')}
-                    </button>
-                    <button
-                      className={activeView === 'messages' ? 'active' : ''}
-                      type="button"
-                      onClick={() => {
-                        showDashboardView('messages')
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      <AppIcon name="message" />
-                      {t('myMessages')}
-                      {unreadMessageCount > 0 && (
-                        <span className="notification-badge">{unreadMessageCount}</span>
-                      )}
-                    </button>
-                    <button
-                      className={activeView === 'favorites' ? 'active' : ''}
-                      type="button"
-                      onClick={() => {
-                        showDashboardView('favorites')
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      <AppIcon name="favorite" />
-                      {t('myFavorites')}
-                    </button>
-                    <button
-                      className={activeView === 'listings' ? 'active' : ''}
-                      type="button"
-                      onClick={() => {
-                        showDashboardView('listings')
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      <AppIcon name="listing" />
-                      {t('myListings')}
-                    </button>
-                    <button
-                      className={activeView === 'settings' ? 'active' : ''}
-                      type="button"
-                      onClick={() => {
-                        showDashboardView('settings')
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      <AppIcon name="settings" />
-                      Settings
-                    </button>
-                  </nav>
-
-                  <div className="sidebar-block">
-                    <h3>{t('categories')}</h3>
-                    {sidebarCategories.map((item) => (
-                      <button
-                        className={`category-filter-button ${category === item ? 'active' : ''}`}
-                        key={item}
-                        type="button"
-                        onClick={() => {
-                          updateCategory(item)
-                          setIsMobileOptionsOpen(false)
-                        }}
-                      >
-                        <CategoryIcon category={item} />
-                        {translateCategory(t, item)}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="sidebar-block">
-                    <h3>{t('filters')}</h3>
-                    <p>{t('priceRange')}</p>
-                    <div className="price-filter">
-                      <input
-                        min="0"
-                        placeholder="Min"
-                        type="number"
-                        value={minPrice}
-                        onChange={(event) => {
-                          setMinPrice(event.target.value)
-                          setCurrentPage(1)
-                        }}
-                      />
-                      <span>to</span>
-                      <input
-                        min="0"
-                        placeholder="Max"
-                        type="number"
-                        value={maxPrice}
-                        onChange={(event) => {
-                          setMaxPrice(event.target.value)
-                          setCurrentPage(1)
-                        }}
-                      />
-                    </div>
-
-                    <p>{t('condition')}</p>
-                    <div className="condition-list">
-                      {conditions.map((item) => (
-                        <label key={item}>
-                          <input
-                            checked={conditionFilters.includes(item)}
-                            type="checkbox"
-                            onChange={() => toggleCondition(item)}
-                          />
-                          <span>{translateCondition(t, item)}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <button
-                      className="filter-button"
-                      type="button"
-                      onClick={() => {
-                        setNotice('Filters applied.')
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      {t('applyFilters')}
-                    </button>
-                    <button
-                      className="reset-button"
-                      type="button"
-                      onClick={() => {
-                        resetFilters()
-                        setIsMobileOptionsOpen(false)
-                      }}
-                    >
-                      {t('resetFilters')}
-                    </button>
-                  </div>
-                </div>
-              )}
             </section>
           )}
 
