@@ -412,13 +412,8 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading}
-              title={
-                socialProviders?.facebook === false
-                  ? 'Facebook login is not configured yet.'
-                  : 'Continue with Facebook'
-              }
-              onClick={() => handleSocialLogin('Facebook')}
+              disabled
+              title="Facebook login is coming soon."
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -434,13 +429,8 @@ function AuthPage({
             </button>
             <button
               type="button"
-              disabled={isLoading}
-              title={
-                socialProviders?.apple === false
-                  ? 'Apple login is not configured yet.'
-                  : 'Continue with Apple'
-              }
-              onClick={() => handleSocialLogin('Apple')}
+              disabled
+              title="Apple login is coming soon."
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
