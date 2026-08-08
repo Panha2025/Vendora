@@ -1985,97 +1985,6 @@ progress::-webkit-progress-value {
   flex: 0 0 auto;
 }
 
-.connect-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: grid;
-  padding: 20px;
-  place-items: center;
-  background: rgba(15, 23, 42, 0.42);
-}
-
-.connect-dialog {
-  position: relative;
-  display: grid;
-  gap: 14px;
-  width: min(420px, 100%);
-  padding: 28px;
-  border: 1px solid #e3e8f0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
-  text-align: center;
-}
-
-.connect-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 34px;
-  min-height: 34px;
-  color: #64748b;
-  border: 1px solid #d8dee8;
-  border-radius: 999px;
-  background: #fff;
-  font-weight: 900;
-}
-
-.connect-provider-mark {
-  display: grid;
-  width: 54px;
-  height: 54px;
-  place-items: center;
-  justify-self: center;
-  color: #fff;
-  border-radius: 999px;
-  background: #0969f6;
-  font-size: 1.35rem;
-  font-weight: 900;
-}
-
-.connect-dialog h2 {
-  margin: 0;
-  color: #111827;
-  font-size: 1.45rem;
-}
-
-.connect-dialog p {
-  margin: 0;
-  color: #526079;
-  font-weight: 600;
-}
-
-.connect-dialog-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.connect-dialog-actions button {
-  min-height: 44px;
-  border-radius: 8px;
-  font-weight: 900;
-}
-
-.connect-dialog-actions button:first-child {
-  color: #334155;
-  border: 1px solid #d8dee8;
-  background: #fff;
-}
-
-.connect-dialog-actions button:last-child {
-  color: #fff;
-  border: 0;
-  background: #0969f6;
-}
-
-.connect-dialog-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
 @media (max-width: 520px) {
   .auth-page {
     padding: 14px;
@@ -5635,6 +5544,51 @@ progress::-webkit-progress-value {
   width: 100%;
   aspect-ratio: 1.12 / 1;
   object-fit: cover;
+}
+
+@media (max-width: 520px) {
+  .plain-auth-card .social-login-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch;
+  }
+
+  .plain-auth-card .social-login-buttons button {
+    min-width: 0;
+    padding-inline: 4px;
+    font-size: 0.72rem;
+  }
+
+  .plain-auth-card .social-login-buttons .social-logo {
+    width: 17px;
+    height: 17px;
+  }
+
+  .dashboard-content .promo-search-card .promo-search-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch;
+  }
+
+  .dashboard-content .promo-search-card .promo-search-row button {
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .dashboard-content .promo-search-card .promo-search-row button:last-child {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .plain-auth-card .social-login-buttons {
+    gap: 5px;
+  }
+
+  .plain-auth-card .social-login-buttons button {
+    gap: 3px;
+    font-size: 0.66rem;
+  }
 }
 
 .detail-empty-image {

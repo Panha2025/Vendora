@@ -38,15 +38,11 @@ function AuthPage({
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState('info')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedProvider, setSelectedProvider] = useState('')
   const [socialProviders, setSocialProviders] = useState(null)
   const [avatarCropTarget, setAvatarCropTarget] = useState(null)
 
   const isRegistering = mode === 'register'
   const authTitle = isRegistering ? 'Register' : 'Log In'
-  const selectedProviderKey = selectedProvider.toLowerCase()
-  const isSelectedProviderConfigured =
-    !selectedProvider || socialProviders?.[selectedProviderKey] !== false
 
   useEffect(() => {
     let isActive = true
@@ -158,7 +154,7 @@ function AuthPage({
     }
   }
 
-  async function handleSocialLogin(provider = selectedProvider) {
+  async function handleSocialLogin(provider) {
     if (!provider) {
       return
     }
@@ -169,7 +165,6 @@ function AuthPage({
 
     try {
       const session = await socialLoginUser(provider)
-      setSelectedProvider('')
       onAuthenticated(session.user)
     } catch (error) {
       setMessage(error.message)
@@ -179,16 +174,10 @@ function AuthPage({
     }
   }
 
-  function openSocialDialog(provider) {
-    setMessage('')
-    setSelectedProvider(provider)
-  }
-
   function switchMode(nextMode) {
     setMode(nextMode)
     setMessage('')
     setMessageType('info')
-    setSelectedProvider('')
   }
 
   function validateForm() {
@@ -399,7 +388,7 @@ function AuthPage({
                   ? 'Google login is not configured yet.'
                   : 'Continue with Google'
               }
-              onClick={() => openSocialDialog('Google')}
+              onClick={() => handleSocialLogin('Google')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -419,7 +408,7 @@ function AuthPage({
                   d="M12 4.6c1.6 0 3.1.6 4.2 1.7l3.1-3.1C17.5 1.2 15 0 12 0 7.7 0 3.9 2.7 2.1 6.6l3.5 2.8c.9-2.8 3.4-4.8 6.4-4.8z"
                 />
               </svg>
-              Google
+              <span>Google</span>
             </button>
             <button
               type="button"
@@ -429,7 +418,7 @@ function AuthPage({
                   ? 'Facebook login is not configured yet.'
                   : 'Continue with Facebook'
               }
-              onClick={() => openSocialDialog('Facebook')}
+              onClick={() => handleSocialLogin('Facebook')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -441,7 +430,7 @@ function AuthPage({
                   d="m16.7 15.5.5-3.5h-3.4V9.8c0-1 .5-1.9 2-1.9h1.5v-3s-1.4-.2-2.7-.2c-2.7 0-4.5 1.7-4.5 4.7V12h-3v3.5h3v8.4a12.6 12.6 0 0 0 3.7 0v-8.4h2.9z"
                 />
               </svg>
-              Facebook
+              <span>Facebook</span>
             </button>
             <button
               type="button"
@@ -451,7 +440,7 @@ function AuthPage({
                   ? 'Apple login is not configured yet.'
                   : 'Continue with Apple'
               }
-              onClick={() => openSocialDialog('Apple')}
+              onClick={() => handleSocialLogin('Apple')}
             >
               <svg className="social-logo" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -459,58 +448,10 @@ function AuthPage({
                   d="M17.6 12.8c0-2.8 2.3-4.1 2.4-4.2-1.3-1.9-3.3-2.2-4-2.2-1.7-.2-3.3 1-4.2 1-.9 0-2.3-1-3.8-.9-1.9 0-3.7 1.1-4.7 2.8-2 3.5-.5 8.7 1.4 11.5 1 1.4 2.1 2.9 3.6 2.9 1.5-.1 2-.9 3.8-.9s2.3.9 3.8.9c1.6 0 2.6-1.4 3.6-2.8 1.1-1.6 1.5-3.1 1.5-3.2-.1 0-3.4-1.3-3.4-4.9zM15 4.7c.8-1 1.4-2.3 1.2-3.7-1.2.1-2.6.8-3.4 1.8-.8.9-1.4 2.2-1.2 3.5 1.3.1 2.6-.6 3.4-1.6z"
                 />
               </svg>
-              Apple
+              <span>Apple</span>
             </button>
           </div>
         </div>
-
-        {selectedProvider && (
-          <div className="connect-dialog-backdrop" role="presentation">
-            <section
-              aria-labelledby="connect-title"
-              aria-modal="true"
-              className="connect-dialog"
-              role="dialog"
-            >
-              <button
-                aria-label="Close connection dialog"
-                className="connect-close"
-                type="button"
-                onClick={() => setSelectedProvider('')}
-              >
-                x
-              </button>
-              <div className="connect-provider-mark">
-                {selectedProvider.charAt(0)}
-              </div>
-              <h2 id="connect-title">Continue with {selectedProvider}</h2>
-              <p>
-                {isSelectedProviderConfigured
-                  ? `Vendora will create or open your marketplace account using your ${selectedProvider} sign-in.`
-                  : `${selectedProvider} login is not connected yet. Add the ${selectedProvider} OAuth credentials in the backend environment, then redeploy the backend.`}
-              </p>
-              <div className="connect-dialog-actions">
-                <button
-                  type="button"
-                  onClick={() => setSelectedProvider('')}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={isLoading || !isSelectedProviderConfigured}
-                  onClick={() => handleSocialLogin()}
-                >
-                  {isLoading
-                    ? 'Connecting...'
-                    : isSelectedProviderConfigured
-                      ? `Connect ${selectedProvider}`
-                      : 'Setup Required'}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
 
         {avatarCropTarget && (
           <ProfileCropper
