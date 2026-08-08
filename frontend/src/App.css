@@ -329,7 +329,7 @@ label {
   align-items: center;
   width: 100%;
   min-height: 38px;
-  padding: 0 32px 0 12px;
+  padding: 0 12px;
   gap: 8px;
   color: #111827;
   border: 1px solid #dbe8ff;
@@ -337,17 +337,6 @@ label {
   background: #fff;
   font-size: 0.84rem;
   font-weight: 900;
-}
-
-.language-select-button::after {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  content: '⌄';
-  color: #111827;
-  font-size: 1rem;
-  line-height: 1;
-  transform: translateY(-66%);
 }
 
 .language-options {
@@ -2406,10 +2395,6 @@ progress::-webkit-progress-value {
 
 .dark-mode .language-options button {
   color: #e5e7eb;
-}
-
-.dark-mode .language-select-button::after {
-  color: #f8fafc;
 }
 
 .dark-mode .side-menu button.active,
