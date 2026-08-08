@@ -211,7 +211,7 @@ function UserAvatar({ user, label = user?.name || 'User' }) {
   )
 }
 
-function AccountSettingsSection({ onUserUpdate, user }) {
+function AccountSettingsSection({ onBack, onUserUpdate, user }) {
   const [form, setForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -293,6 +293,9 @@ function AccountSettingsSection({ onUserUpdate, user }) {
 
   return (
     <section className="settings-panel" aria-label="Account settings">
+      <button className="settings-back-button" type="button" onClick={onBack}>
+        Back to dashboard
+      </button>
       <div className="settings-header">
         <div>
           <span>Account Settings</span>
@@ -1811,6 +1814,7 @@ function MarketplacePage({
 
           {activeView === 'settings' && (
             <AccountSettingsSection
+              onBack={() => showDashboardView('home')}
               onUserUpdate={handleProfileUpdate}
               user={user}
             />

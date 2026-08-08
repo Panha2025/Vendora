@@ -3400,6 +3400,21 @@ progress::-webkit-progress-value {
   box-shadow: 0 22px 56px rgba(15, 23, 42, 0.09);
 }
 
+.settings-back-button {
+  min-height: 40px;
+  margin-bottom: 18px;
+  padding: 0 14px;
+  color: #0969f6;
+  border: 1px solid #cfe0fb;
+  border-radius: 8px;
+  background: #f8fbff;
+  font-weight: 900;
+}
+
+.settings-back-button:hover {
+  background: #eaf2ff;
+}
+
 .settings-header {
   display: flex;
   align-items: center;
@@ -3549,6 +3564,11 @@ progress::-webkit-progress-value {
 @media (max-width: 720px) {
   .settings-panel {
     padding: 20px;
+  }
+
+  .settings-back-button {
+    width: 100%;
+    margin-bottom: 16px;
   }
 
   .settings-header {
