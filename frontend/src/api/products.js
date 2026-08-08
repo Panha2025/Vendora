@@ -62,6 +62,7 @@ export function mapApiProduct(product) {
     condition: product.condition,
     location: product.location,
     price: Number(product.price),
+    priceDisplay: String(product.price ?? '').replace(/\.00$/, ''),
     seller,
     sellerAvatar: product.seller?.avatar,
     sellerId: product.user_id,

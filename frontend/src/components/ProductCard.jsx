@@ -33,6 +33,8 @@ function ProductCard({
         ) : (
           <span className="product-image-empty">No image</span>
         )}
+        {product.status === 'Sold' && <span className="product-stock-badge">Out of stock</span>}
+        {product.status === 'Reserved' && <span className="product-stock-badge reserved">Reserved</span>}
       </button>
       <div className="favorite-button-wrap">
         <button
@@ -64,7 +66,7 @@ function ProductCard({
         >
           {product.title}
         </button>
-        <strong>${product.price}</strong>
+        <strong>${product.priceDisplay ?? product.price}</strong>
 
         <div className="dashboard-product-meta">
           <span>{product.location}</span>

@@ -28,6 +28,7 @@ function ProductDetailView({
   onEdit,
   onMessage,
   onShowDetail,
+  onToggleStatus,
   onToggleFavorite,
   product,
   relatedProducts,
@@ -112,8 +113,10 @@ function ProductDetailView({
           <p className="detail-category">{product.category}</p>
           <h1>{product.title}</h1>
           <div className="detail-price-row">
-            <strong>${product.price}</strong>
-            <span>{t('inStock')}</span>
+            <strong>${product.priceDisplay ?? product.price}</strong>
+            <span className={product.status === 'Sold' ? 'out-of-stock' : ''}>
+              {product.status === 'Sold' ? 'Out of stock' : product.status === 'Reserved' ? 'Reserved' : t('inStock')}
+            </span>
           </div>
           <p className="detail-location">
             {product.location} - {product.duration}
@@ -185,6 +188,13 @@ function ProductDetailView({
             <>
               <button type="button" onClick={() => onEdit(product)}>
                 {t('editListing')}
+              </button>
+              <button
+                className={product.status === 'Sold' ? 'stock-action' : 'stock-action warning'}
+                type="button"
+                onClick={() => onToggleStatus(product)}
+              >
+                {product.status === 'Sold' ? 'Mark In Stock' : 'Mark Out of Stock'}
               </button>
               <button
                 className="danger-action"

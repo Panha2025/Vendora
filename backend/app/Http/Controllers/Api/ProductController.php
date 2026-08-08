@@ -102,7 +102,8 @@ class ProductController extends Controller
         if ($request->hasFile('images') || $request->has('existing_images')) {
             $currentImages = $product->images ?? [];
             $existingImages = collect($validated['existing_images'] ?? [])
-                ->filter(fn ($image) => in_array($image, $currentImages, true))
+                ->map(fn ($image) => $this->storedImageFromInput($product, $image))
+                ->filter(fn ($image) => $image && in_array($image, $currentImages, true))
                 ->values()
                 ->all();
 
@@ -250,6 +251,26 @@ class ProductController extends Controller
         }
 
         return "{$scheme}://{$host}/api/products/{$product->id}/images/{$index}";
+    }
+
+    private function storedImageFromInput(Product $product, string $imageInput): ?string
+    {
+        $currentImages = $product->images ?? [];
+
+        if (in_array($imageInput, $currentImages, true)) {
+            return $imageInput;
+        }
+
+        $path = parse_url($imageInput, PHP_URL_PATH) ?: $imageInput;
+        $pattern = "#/api/products/{$product->id}/images/(\\d+)$#";
+
+        if (preg_match($pattern, $path, $matches)) {
+            $index = (int) $matches[1];
+
+            return $currentImages[$index] ?? null;
+        }
+
+        return null;
     }
 
     private function localStoragePath(string $imageUrl): ?string

@@ -7,6 +7,8 @@ export const categories = [
   'Laptops',
   'Home & Living',
   'Furniture',
+  'Vehicles',
+  'Spare Part',
   'Fashion',
   'Handmade',
   'Stationery',

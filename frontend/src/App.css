@@ -310,7 +310,7 @@ label {
   font-weight: 900;
 }
 
-.language-select span {
+.language-select > span {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -318,15 +318,67 @@ label {
   clip: rect(0 0 0 0);
 }
 
-.language-select select {
+.language-select-control {
+  position: relative;
+  width: 100%;
+}
+
+.language-select-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
   min-height: 38px;
-  padding: 0 12px;
-  border-color: #dbe8ff;
+  padding: 0 32px 0 12px;
+  gap: 8px;
+  color: #111827;
+  border: 1px solid #dbe8ff;
   border-radius: 8px;
   background: #fff;
-  color: #111827;
   font-size: 0.84rem;
   font-weight: 900;
+}
+
+.language-select-button::after {
+  position: absolute;
+  right: 12px;
+  content: '⌄';
+  color: #111827;
+  font-size: 1rem;
+}
+
+.language-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  display: grid;
+  min-width: 100%;
+  padding: 6px;
+  border: 1px solid #dce3ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+}
+
+.language-options button {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  gap: 8px;
+  color: #334155;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-weight: 900;
+  text-align: left;
+}
+
+.language-options button:hover,
+.language-options button.active {
+  color: #0969f6;
+  background: #eaf2ff;
 }
 
 .compact-language-select {
@@ -334,7 +386,7 @@ label {
   transform: translateY(-1px);
 }
 
-.compact-language-select select {
+.compact-language-select .language-select-button {
   min-height: 42px;
 }
 
@@ -348,7 +400,7 @@ label {
   transform: translateY(-1px);
 }
 
-.admin-language-select select {
+.admin-language-select .language-select-button {
   min-height: 40px;
 }
 
@@ -1602,6 +1654,106 @@ progress::-webkit-progress-value {
   font-weight: 900;
 }
 
+.flag-icon {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 20px;
+  height: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  flex: 0 0 auto;
+}
+
+.flag-uk {
+  background: #012169;
+}
+
+.flag-uk-cross-white,
+.flag-uk-cross-red,
+.flag-uk-diagonal-white,
+.flag-uk-diagonal-red {
+  position: absolute;
+  inset: 0;
+}
+
+.flag-uk-diagonal-white.one {
+  background: linear-gradient(28deg, transparent 42%, #fff 42%, #fff 58%, transparent 58%);
+}
+
+.flag-uk-diagonal-white.two {
+  background: linear-gradient(152deg, transparent 42%, #fff 42%, #fff 58%, transparent 58%);
+}
+
+.flag-uk-diagonal-red.one {
+  background: linear-gradient(28deg, transparent 46%, #c8102e 46%, #c8102e 54%, transparent 54%);
+}
+
+.flag-uk-diagonal-red.two {
+  background: linear-gradient(152deg, transparent 46%, #c8102e 46%, #c8102e 54%, transparent 54%);
+}
+
+.flag-uk-cross-white {
+  background:
+    linear-gradient(90deg, transparent 38%, #fff 38%, #fff 62%, transparent 62%),
+    linear-gradient(0deg, transparent 32%, #fff 32%, #fff 68%, transparent 68%);
+}
+
+.flag-uk-cross-red {
+  background:
+    linear-gradient(90deg, transparent 44%, #c8102e 44%, #c8102e 56%, transparent 56%),
+    linear-gradient(0deg, transparent 40%, #c8102e 40%, #c8102e 60%, transparent 60%);
+}
+
+.flag-kh {
+  background:
+    linear-gradient(180deg, #032ea1 0 25%, #e00025 25% 75%, #032ea1 75% 100%);
+}
+
+.flag-kh-temple {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  width: 9px;
+  height: 5px;
+  background: #fff;
+  clip-path: polygon(0 100%, 0 55%, 18% 55%, 18% 28%, 35% 28%, 35% 0, 50% 0, 50% 28%, 66% 28%, 66% 55%, 100% 55%, 100% 100%);
+  transform: translateX(-50%);
+}
+
+.flag-cn {
+  background: #de2910;
+}
+
+.flag-cn-star {
+  position: absolute;
+  background: #ffde00;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 2% 35%, 39% 35%);
+}
+
+.flag-cn-star.main {
+  top: 2px;
+  left: 3px;
+  width: 5px;
+  height: 5px;
+}
+
+.flag-cn-star.small {
+  width: 3px;
+  height: 3px;
+}
+
+.flag-cn-star.one {
+  top: 2px;
+  left: 9px;
+}
+
+.flag-cn-star.two {
+  top: 6px;
+  left: 11px;
+}
+
 .avatar-preview-circle {
   width: 88px;
   height: 88px;
@@ -1949,7 +2101,21 @@ progress::-webkit-progress-value {
   }
 
   .social-login-buttons {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .social-login-buttons button {
+    min-height: 42px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .social-logo {
+    width: 19px;
+    height: 19px;
   }
 
   .contact-fields {
@@ -2070,6 +2236,12 @@ progress::-webkit-progress-value {
   min-width: 0;
 }
 
+.contact-bar {
+  min-height: 12px;
+  border-bottom: 1px solid #e5eaf1;
+  background: #f8fafc;
+}
+
 .responsive-top-controls {
   display: none;
   gap: 8px;
@@ -2080,7 +2252,36 @@ progress::-webkit-progress-value {
   position: relative;
 }
 
+.mobile-icon-button,
+.mobile-account-button {
+  position: relative;
+  display: grid;
+  width: 40px;
+  min-height: 40px;
+  place-items: center;
+  color: #111827;
+  border: 1px solid #dce3ee;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.mobile-account-wrap {
+  position: relative;
+}
+
+.mobile-account-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 45;
+  width: 190px;
+}
+
 .mobile-menu-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-height: 40px;
   padding: 0 14px;
   color: #111827;
@@ -2195,6 +2396,7 @@ progress::-webkit-progress-value {
 
 .dark-mode .dashboard-topbar,
 .dark-mode .dashboard-sidebar,
+.dark-mode .contact-bar,
 .dark-mode .mobile-menu-panel,
 .dark-mode .dashboard-product-card,
 .dark-mode .plain-panel,
@@ -2220,6 +2422,8 @@ progress::-webkit-progress-value {
 .dark-mode .dashboard-brand,
 .dark-mode .dashboard-actions button,
 .dark-mode .mobile-menu-toggle,
+.dark-mode .mobile-icon-button,
+.dark-mode .mobile-account-button,
 .dark-mode .mobile-menu-panel strong,
 .dark-mode .side-menu button,
 .dark-mode .sidebar-block button,
@@ -2273,6 +2477,10 @@ progress::-webkit-progress-value {
 
 .dark-mode .theme-toggle,
 .dark-mode .mobile-menu-toggle,
+.dark-mode .mobile-icon-button,
+.dark-mode .mobile-account-button,
+.dark-mode .language-select-button,
+.dark-mode .language-options,
 .dark-mode .dashboard-actions button:hover,
 .dark-mode .mobile-menu-panel button:hover,
 .dark-mode .dashboard-card-actions button:first-child,
@@ -2282,6 +2490,14 @@ progress::-webkit-progress-value {
   color: #eeeeee;
   border-color: #333333;
   background: #171717;
+}
+
+.dark-mode .language-options button {
+  color: #e5e7eb;
+}
+
+.dark-mode .language-select-button::after {
+  color: #f8fafc;
 }
 
 .dark-mode .side-menu button.active,
@@ -2385,6 +2601,10 @@ progress::-webkit-progress-value {
 }
 
 .dark-mode .account-menu-panel button {
+  color: #e5e7eb;
+}
+
+.dark-mode .account-menu-panel .account-menu-logout {
   color: #fca5a5;
 }
 
@@ -2485,6 +2705,10 @@ progress::-webkit-progress-value {
 
 .mobile-menu-panel .notification-badge {
   margin-left: auto;
+}
+
+.mobile-menu-toggle .notification-badge {
+  margin-left: 2px;
 }
 
 .app-icon,
@@ -3460,14 +3684,35 @@ progress::-webkit-progress-value {
   position: relative;
   aspect-ratio: 1.18 / 1;
   overflow: hidden;
-  background: #eef2f7;
+  background:
+    linear-gradient(135deg, rgba(241, 245, 249, 0.9), rgba(226, 232, 240, 0.9)),
+    #eef2f7;
 }
 
 .dashboard-product-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  image-rendering: auto;
   transition: transform 220ms ease;
+}
+
+.product-stock-badge {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 1;
+  padding: 6px 9px;
+  color: #fff;
+  border-radius: 999px;
+  background: rgba(185, 28, 28, 0.92);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.product-stock-badge.reserved {
+  background: rgba(180, 83, 9, 0.94);
 }
 
 .product-image-empty {
@@ -5065,16 +5310,20 @@ progress::-webkit-progress-value {
   }
 
   .promo-search-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
   }
 
   .promo-search-row button {
     min-height: 42px;
-    padding: 0 10px;
-    font-size: 0.78rem;
+    padding: 0 6px;
+    font-size: 0.72rem;
     text-align: center;
+  }
+
+  .promo-search-row button:last-child {
+    display: none;
   }
 
   .promo-cards {
@@ -5452,6 +5701,11 @@ progress::-webkit-progress-value {
   font-weight: 900;
 }
 
+.detail-price-row span.out-of-stock {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
 .detail-location {
   margin: 0 0 22px;
   color: #64748b;
@@ -5585,6 +5839,18 @@ progress::-webkit-progress-value {
   color: #334155;
   border: 1px solid #dce3ee;
   background: #fff;
+}
+
+.seller-card .stock-action {
+  color: #0969f6;
+  border: 1px solid #b9d5ff;
+  background: #eef6ff;
+}
+
+.seller-card .stock-action.warning {
+  color: #92400e;
+  border-color: #fed7aa;
+  background: #fff7ed;
 }
 
 .seller-card button.danger-action {

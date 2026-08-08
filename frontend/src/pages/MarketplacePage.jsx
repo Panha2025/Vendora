@@ -7,8 +7,9 @@ import {
   sendConversationMessage,
   startConversation,
 } from '../api/messages'
-import { deleteProduct, formatRelativeTime, getProducts } from '../api/products'
+import { deleteProduct, formatRelativeTime, getProducts, updateProduct } from '../api/products'
 import vendoraLogo from '../assets/Vendora_img.png'
+import LanguageSelect from '../components/LanguageSelect'
 import ProductCard from '../components/ProductCard'
 import ProfileCropper from '../components/ProfileCropper'
 import { categories, conditions, products } from '../data/products'
@@ -54,6 +55,22 @@ const categoryIconPaths = {
     <path key="2" d="M7 11V8a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v3" />,
     <path key="3" d="M5 17v3" />,
     <path key="4" d="M19 17v3" />,
+  ],
+  Vehicles: [
+    <path key="1" d="M4 14h16l-1.6-4.2A3 3 0 0 0 15.6 8H8.4a3 3 0 0 0-2.8 1.8L4 14Z" />,
+    <path key="2" d="M5 14v4h2" />,
+    <path key="3" d="M17 18h2v-4" />,
+    <circle key="4" cx="8" cy="18" r="2" />,
+    <circle key="5" cx="16" cy="18" r="2" />,
+    <path key="6" d="M7 12h10" />,
+  ],
+  'Spare Part': [
+    <path key="1" d="m14.7 6.3 3 3" />,
+    <path key="2" d="M4 20 15.8 8.2a3.3 3.3 0 0 1 4-4L16 8l-2.1 2.1" />,
+    <path key="3" d="M7 17l-3 3" />,
+    <circle key="4" cx="8" cy="8" r="3" />,
+    <path key="5" d="M8 5v6" />,
+    <path key="6" d="M5 8h6" />,
   ],
   Fashion: [
     <path key="1" d="M9 4h6l2 3 3 1.5-2 4-2-1V20H8v-8.5l-2 1-2-4L7 7z" />,
@@ -444,6 +461,8 @@ function translateCategory(t, item) {
     Laptops: 'categoryLaptops',
     'Home & Living': 'categoryHomeLiving',
     Furniture: 'categoryFurniture',
+    Vehicles: 'categoryVehicles',
+    'Spare Part': 'categorySparePart',
     Fashion: 'categoryFashion',
     Handmade: 'categoryHandmade',
     Stationery: 'categoryStationery',
@@ -543,6 +562,7 @@ function MarketplacePage({
   const [editingProduct, setEditingProduct] = useState(null)
   const [notice, setNotice] = useState('')
   const accountMenuRef = useRef(null)
+  const mobileAccountMenuRef = useRef(null)
   const isGuest = !user
 
   useEffect(() => {
@@ -555,7 +575,10 @@ function MarketplacePage({
     }
 
     function closeAccountMenu(event) {
-      if (!accountMenuRef.current?.contains(event.target)) {
+      const clickedDesktopMenu = accountMenuRef.current?.contains(event.target)
+      const clickedMobileMenu = mobileAccountMenuRef.current?.contains(event.target)
+
+      if (!clickedDesktopMenu && !clickedMobileMenu) {
         setIsAccountMenuOpen(false)
       }
     }
@@ -750,6 +773,29 @@ function MarketplacePage({
     (total, conversation) => total + Number(conversation.unread || 0),
     0,
   )
+  const relatedProducts = useMemo(() => {
+    if (!selectedProduct) {
+      return []
+    }
+
+    return listings
+      .filter((item) => item.id !== selectedProduct.id && item.image)
+      .sort((first, second) => {
+        const firstScore =
+          (first.category === selectedProduct.category ? 100 : 0)
+          + (first.condition === selectedProduct.condition ? 20 : 0)
+          + Number(first.favoriteCount || 0)
+          + getProductSortValue(first) / 100000
+        const secondScore =
+          (second.category === selectedProduct.category ? 100 : 0)
+          + (second.condition === selectedProduct.condition ? 20 : 0)
+          + Number(second.favoriteCount || 0)
+          + getProductSortValue(second) / 100000
+
+        return secondScore - firstScore
+      })
+      .slice(0, 8)
+  }, [listings, selectedProduct])
 
   async function handleCreateListing(listing) {
     if (isGuest) {
@@ -811,6 +857,29 @@ function MarketplacePage({
     if (updatedProduct.apiId) {
       saveServerListings(mergeListings([updatedProduct], getCachedListings(SERVER_LISTING_CACHE_KEY)))
       refreshListingsFromServer({ keepListings: [updatedProduct] }).catch(() => null)
+    }
+  }
+
+  async function handleToggleListingStatus(product) {
+    if (!isOwnListing(product)) {
+      setNotice('Only the seller can update this item.')
+      return
+    }
+
+    const nextStatus = product.status === 'Sold' ? 'Available' : 'Sold'
+
+    if (!product.apiId) {
+      const updatedProduct = { ...product, status: nextStatus }
+      handleUpdateListing(updatedProduct)
+      return
+    }
+
+    try {
+      const result = await updateProduct(product.apiId, { status: nextStatus })
+      handleUpdateListing(result.product)
+      setNotice(nextStatus === 'Sold' ? 'Listing marked out of stock.' : 'Listing marked in stock.')
+    } catch (error) {
+      setNotice(error.message || 'Could not update listing status.')
     }
   }
 
@@ -1214,18 +1283,12 @@ function MarketplacePage({
         </label>
 
         <div className="dashboard-actions">
-          <label className="language-select compact-language-select">
-            <span>{t('language')}</span>
-            <select
-              aria-label={t('language')}
-              value={language}
-              onChange={(event) => onLanguageChange(event.target.value)}
-            >
-              <option value="en">&#x1F1FA;&#x1F1F8; English</option>
-              <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
-              <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
-            </select>
-          </label>
+          <LanguageSelect
+            className="compact-language-select"
+            label={t('language')}
+            language={language}
+            onLanguageChange={onLanguageChange}
+          />
           <button
             className="theme-toggle"
             type="button"
@@ -1275,6 +1338,14 @@ function MarketplacePage({
         </div>
 
         <div className="responsive-top-controls">
+          <button
+            aria-label={theme === 'dark' ? t('lightMode') : t('darkMode')}
+            className="mobile-icon-button"
+            type="button"
+            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          >
+            <AppIcon name="theme" />
+          </button>
           <div className="mobile-top-menu">
             <button
               aria-expanded={isTopMenuOpen}
@@ -1283,6 +1354,9 @@ function MarketplacePage({
               onClick={() => setIsTopMenuOpen((open) => !open)}
             >
               Menu
+              {unreadMessageCount > 0 && (
+                <span className="notification-badge">{unreadMessageCount}</span>
+              )}
             </button>
             {isTopMenuOpen && (
               <div className="mobile-menu-panel">
@@ -1292,7 +1366,6 @@ function MarketplacePage({
                   </button>
                 ) : (
                   <>
-                    <strong>{user?.name || 'John Doe'}</strong>
                     <button type="button" onClick={() => showDashboardView('messages')}>
                       <AppIcon name="message" />
                       {t('messages')}
@@ -1312,51 +1385,58 @@ function MarketplacePage({
                       <AppIcon name="post" />
                       {t('postItem')}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-                    >
-                      <AppIcon name="theme" />
-                      {theme === 'dark' ? t('lightMode') : t('darkMode')}
-                    </button>
-                    <label className="language-select">
-                      <span>{t('language')}</span>
-                      <select
-                        aria-label={t('language')}
-                        value={language}
-                        onChange={(event) => onLanguageChange(event.target.value)}
-                      >
-                        <option value="en">&#x1F1FA;&#x1F1F8; English</option>
-                        <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
-                        <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
-                      </select>
-                    </label>
-                    <button type="button" onClick={onLogout}>
-                      {t('logout')}
-                    </button>
+                    <LanguageSelect
+                      label={t('language')}
+                      language={language}
+                      onLanguageChange={onLanguageChange}
+                    />
                   </>
                 )}
               </div>
             )}
           </div>
+          {!isGuest && (
+            <div className="mobile-account-wrap" ref={mobileAccountMenuRef}>
+              <button
+                aria-label="Account menu"
+                aria-expanded={isAccountMenuOpen}
+                className="mobile-account-button"
+                type="button"
+                onClick={() => setIsAccountMenuOpen((open) => !open)}
+              >
+                <UserAvatar user={user} />
+              </button>
+              {isAccountMenuOpen && (
+                <div className="account-menu-panel mobile-account-panel">
+                  <button className="account-menu-settings" type="button" onClick={() => showDashboardView('settings')}>
+                    <AppIcon name="settings" />
+                    Settings
+                  </button>
+                  <button className="account-menu-logout" type="button" onClick={onLogout}>
+                    <AppIcon name="logout" />
+                    {t('logout')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
+
+      <div className="contact-bar" aria-label="Contact bar" />
 
       {selectedProduct ? (
         <ProductDetailView
           canEdit={isOwnListing(selectedProduct)}
           isFavorite={favoriteIds.includes(selectedProduct.id)}
           product={selectedProduct}
-          relatedProducts={listings.filter(
-            (item) =>
-              item.id !== selectedProduct.id
-              && item.category === selectedProduct.category,
-          )}
+          relatedProducts={relatedProducts}
           onBack={goBackToDashboard}
           onDelete={handleDeleteListing}
           onEdit={handleEditListing}
           onMessage={handleMessage}
           onShowDetail={openProductDetail}
+          onToggleStatus={handleToggleListingStatus}
           onToggleFavorite={toggleFavorite}
           t={t}
         />

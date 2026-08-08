@@ -102,7 +102,7 @@ function MessagesView({
               <div>
                 <strong>{activeConversation.seller}</strong>
                 <span>{activeConversation.product.title}</span>
-                <b>${activeConversation.product.price}</b>
+                <b>${activeConversation.product.priceDisplay ?? activeConversation.product.price}</b>
               </div>
             </div>
             <button

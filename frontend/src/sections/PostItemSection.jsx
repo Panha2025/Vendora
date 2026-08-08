@@ -9,7 +9,7 @@ import { categories } from '../data/products'
 
 const maxImages = 5
 const cardImageAspectRatio = 1.18
-const cropOutputHeight = 900
+const cropOutputHeight = 1100
 const cropOutputWidth = Math.round(cropOutputHeight * cardImageAspectRatio)
 const postCategories = categories.filter((category) => category !== 'All')
 
@@ -90,7 +90,7 @@ async function createCroppedFile(imageItem, crop) {
         file: croppedFile,
         preview: URL.createObjectURL(croppedFile),
       })
-    }, 'image/jpeg', 0.88)
+    }, 'image/jpeg', 0.92)
   })
 }
 
@@ -116,6 +116,7 @@ function PostItemSection({ editingProduct, onCancel, onCreateListing, onUpdateLi
     description: editingProduct?.description || '',
     phone: editingProduct?.details?.Phone || '',
     price: editingProduct?.price ? String(editingProduct.price) : '',
+    status: editingProduct?.status || 'Available',
     telegram: editingProduct?.details?.Telegram || '',
   })
   const [message, setMessage] = useState('')
@@ -323,7 +324,7 @@ function PostItemSection({ editingProduct, onCancel, onCreateListing, onUpdateLi
       location: 'Phnom Penh',
       seller_phone: form.phone,
       seller_telegram: form.telegram,
-      status: 'Available',
+      status: form.status,
     }
     const postedAt = new Date().toISOString()
 
@@ -338,6 +339,7 @@ function PostItemSection({ editingProduct, onCancel, onCreateListing, onUpdateLi
       condition: form.condition,
       location: 'Phnom Penh',
       price: Number(form.price),
+      priceDisplay: form.price,
       seller: user?.name || 'Seller',
       sellerId: user?.id,
       duration: formatRelativeTime(postedAt),
@@ -387,6 +389,7 @@ function PostItemSection({ editingProduct, onCancel, onCreateListing, onUpdateLi
         description: '',
         phone: '',
         price: '',
+        status: 'Available',
         telegram: '',
       })
       setImages([])
@@ -589,6 +592,17 @@ function PostItemSection({ editingProduct, onCancel, onCreateListing, onUpdateLi
               />
             </div>
           </label>
+
+          {editingProduct && (
+            <label className="stock-status-field">
+              <span>Stock status</span>
+              <select name="status" value={form.status} onChange={updateField}>
+                <option value="Available">In stock</option>
+                <option value="Sold">Out of stock</option>
+                <option value="Reserved">Reserved</option>
+              </select>
+            </label>
+          )}
 
           {message && <p className="post-message">{message}</p>}
 

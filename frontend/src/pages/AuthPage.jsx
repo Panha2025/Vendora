@@ -5,6 +5,7 @@ import {
   registerUser,
   socialLoginUser,
 } from '../api/auth'
+import LanguageSelect from '../components/LanguageSelect'
 import ProfileCropper from '../components/ProfileCropper'
 
 function CameraIcon() {
@@ -242,18 +243,12 @@ function AuthPage({
           </button>
         )}
 
-        <label className="language-select auth-language-select">
-          <span>{t('language')}</span>
-          <select
-            aria-label={t('language')}
-            value={language}
-            onChange={(event) => onLanguageChange(event.target.value)}
-          >
-            <option value="en">&#x1F1FA;&#x1F1F8; English</option>
-            <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
-            <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
-          </select>
-        </label>
+        <LanguageSelect
+          className="auth-language-select"
+          label={t('language')}
+          language={language}
+          onLanguageChange={onLanguageChange}
+        />
 
         <div className="plain-auth-header">
           <h1>{authTitle}</h1>

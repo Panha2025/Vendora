@@ -5,6 +5,7 @@ import {
   getAdminOverview,
   renameAdminCategory,
 } from '../api/admin'
+import LanguageSelect from '../components/LanguageSelect'
 
 const moneyFormatter = new Intl.NumberFormat(undefined, {
   currency: 'USD',
@@ -177,18 +178,12 @@ function AdminPage({ language, onLanguageChange, onLogout, t, user }) {
           <h1>{t('adminTitle')}</h1>
         </div>
         <div className="admin-account">
-          <label className="language-select admin-language-select">
-            <span>{t('language')}</span>
-            <select
-              aria-label={t('language')}
-              value={language}
-              onChange={(event) => onLanguageChange(event.target.value)}
-            >
-              <option value="en">&#x1F1FA;&#x1F1F8; English</option>
-              <option value="km">&#x1F1F0;&#x1F1ED; Khmer</option>
-              <option value="zh">&#x1F1E8;&#x1F1F3; &#x4E2D;&#x6587;</option>
-            </select>
-          </label>
+          <LanguageSelect
+            className="admin-language-select"
+            label={t('language')}
+            language={language}
+            onLanguageChange={onLanguageChange}
+          />
           <span>{user?.name || 'Admin'}</span>
           <button type="button" onClick={onLogout}>
             {t('logout')}
